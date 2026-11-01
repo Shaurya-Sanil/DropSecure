@@ -21,7 +21,7 @@ export const CampusGateway: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>AWS ap-south-1 Node Active</span>
+            <span>AWS Cloud Node Active</span>
           </div>
         </div>
       </header>
@@ -51,7 +51,7 @@ export const CampusGateway: React.FC = () => {
               </span>
             </div>
             <span className="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-800">
-              AWS ap-south-1 Multi-AZ Mesh
+              AWS Multi-AZ Mesh
             </span>
           </div>
 
@@ -67,7 +67,7 @@ export const CampusGateway: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-1">Main Engineering Campus</p>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
                 <span>Station #1 • 12 Lockers</span>
-                <span className="text-emerald-400">AZ: ap-south-1a</span>
+                <span className="text-emerald-400">Primary Node</span>
               </div>
             </div>
 
@@ -82,7 +82,7 @@ export const CampusGateway: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-1">Agnel Technical Complex</p>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
                 <span>Station #2 • 12 Lockers</span>
-                <span className="text-blue-400">AZ: ap-south-1b</span>
+                <span className="text-blue-400">Secondary Node</span>
               </div>
             </div>
 
@@ -97,7 +97,7 @@ export const CampusGateway: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-1">Polytechnic & Research Hub</p>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
                 <span>Station #3 • 12 Lockers</span>
-                <span className="text-emerald-400">AZ: ap-south-1a</span>
+                <span className="text-emerald-400">Primary Node</span>
               </div>
             </div>
           </div>
@@ -232,7 +232,7 @@ export const CampusGateway: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>DropSecure • Cloud-Managed Campus Package Delivery System</span>
           <div className="flex items-center space-x-3 text-[11px] font-mono">
-            <span>AWS Region: ap-south-1</span>
+            <span>AWS Cloud Deployment</span>
             <span>•</span>
             <span className="text-brand-400">Zero-Trust OTP Verification</span>
           </div>

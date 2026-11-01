@@ -139,7 +139,7 @@ export const App: React.FC = () => {
         <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
           <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
             <span>DropSecure • Cloud Administration Console</span>
-            <span className="text-[11px] font-mono text-purple-400">AWS Region: ap-south-1</span>
+            <span className="text-[11px] font-mono text-purple-400">AWS Cloud</span>
           </div>
         </footer>
       </div>

@@ -1,11 +1,11 @@
 # 🛡️📦 DropSecure: Cloud-Native Campus Package Handover & Zero-Trust Verification
 
-> **An enterprise-grade, cloud-native logistics and smart locker verification platform engineered on Amazon Web Services (AWS ap-south-1 Mumbai) using Terraform Infrastructure as Code (IaC).**  
+> **An enterprise-grade, cloud-native logistics and smart locker verification platform engineered on Amazon Web Services (AWS) using Terraform Infrastructure as Code (IaC).**  
 > *Developed for Cloud Computing Lab (CCL) at Fr. Conceicao Rodrigues College of Engineering (Fr. CRCE Bandra, Mumbai).*
 
 ---
 
-[![AWS Cloud](https://img.shields.io/badge/AWS-ap--south--1%20(Mumbai)-FF9900?logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
+[![AWS Cloud](https://img.shields.io/badge/AWS-Cloud-FF9900?logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
 [![Terraform IaC](https://img.shields.io/badge/IaC-Terraform%20v1.9+-7B42BC?logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![TypeScript Monorepo](https://img.shields.io/badge/Language-TypeScript%205.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite%20%2B%20Tailwind-61DAFB?logo=react&logoColor=black)](https://react.dev)
@@ -54,7 +54,7 @@ In university campuses and student residences, parcel deliveries are notoriously
 
 ## 🏛️ Live Cloud Architecture Diagram
 
-DropSecure is provisioned 100% on **AWS Mumbai (`ap-south-1`)** using **Terraform Infrastructure as Code**:
+DropSecure is provisioned 100% on **AWS Cloud** using **Terraform Infrastructure as Code**:
 
 ![DropSecure AWS Cloud Architecture](./docs/assets/architecture-diagram.jpg)
 
@@ -154,7 +154,7 @@ http://<EC2-PUBLIC-IP>/
 1. **One-Way Bcrypt Hashing:** Plaintext OTPs are **never saved** in Amazon RDS. Only a one-way `bcrypt` salted hash (10 rounds) is stored. Even a compromised database dump cannot yield valid pickup codes.
 2. **RFC 6238 Dynamic TOTP Standard:** The student app generates dynamic 6-digit tokens using 30-second Unix epoch intervals. Even if someone takes a screenshot of the student's screen, the code expires in $\le 30$ seconds.
 3. **Anti-Brute-Force Guardrails:** The verification endpoint tracks failed attempts. If an attacker guesses incorrectly 5 consecutive times, the parcel is locked (`HTTP 403 Forbidden`).
-4. **VPC Network Isolation:** Amazon RDS resides in an isolated **Private DB Subnet Group** across two Availability Zones (`ap-south-1a`, `ap-south-1b`) with `PubliclyAccessible = false`. Port 5432 is strictly firewalled to the EC2 security group.
+4. **VPC Network Isolation:** Amazon RDS resides in an isolated **Private DB Subnet Group** across two Availability Zones (`AZ-A`, `AZ-B`) with `PubliclyAccessible = false`. Port 5432 is strictly firewalled to the EC2 security group.
 
 ---
 
@@ -164,9 +164,9 @@ DropSecure models a distributed logistics network across the **Father Agnel Engi
 
 | Campus Node | Identifier | Station Name | Lockers | Cloud AZ |
 | :--- | :--- | :--- | :---: | :---: |
-| **Fr. CRCE Bandra (Main Campus)** | `CAMPUS-BANDRA` | Station #1 (Main Security Gate) | 12 Bays | `ap-south-1a` |
-| **Fr. CRIT Vashi (Agnel Technical)** | `CAMPUS-VASHI` | Station #2 (Tech Hub Reception) | 12 Bays | `ap-south-1b` |
-| **Agnel Nerul (Polytechnic & Research)** | `CAMPUS-NERUL` | Station #3 (Library Drop Station) | 12 Bays | `ap-south-1a` |
+| **Fr. CRCE Bandra (Main Campus)** | `CAMPUS-BANDRA` | Station #1 (Main Security Gate) | 12 Bays | `Primary AZ-A` |
+| **Fr. CRIT Vashi (Agnel Technical)** | `CAMPUS-VASHI` | Station #2 (Tech Hub Reception) | 12 Bays | `Secondary AZ-B` |
+| **Agnel Nerul (Polytechnic & Research)** | `CAMPUS-NERUL` | Station #3 (Library Drop Station) | 12 Bays | `Primary AZ-A` |
 
 ---
 
@@ -187,7 +187,7 @@ DropSecure models a distributed logistics network across the **Father Agnel Engi
 
 | Layer | Technologies & Services | Role in DropSecure |
 | :--- | :--- | :--- |
-| **Cloud Infrastructure** | **AWS (ap-south-1 Mumbai)** | Production cloud provider. |
+| **Cloud Infrastructure** | **AWS Cloud** | Production cloud provider. |
 | **Infrastructure as Code** | **Terraform v1.9+** | Modular IaC for VPC, EC2, RDS, S3, SQS, SNS, Lambda, SSM, CloudWatch. |
 | **Compute & Proxy** | **Amazon EC2 (t3.micro) + Nginx** | Amazon Linux 2023 host, reverse proxy, 2GB swap space, PM2 process manager. |
 | **Database** | **Amazon RDS PostgreSQL 16** | Private Multi-AZ DB subnet group, SSL/TLS enforced (`sslmode=require`). |
@@ -282,9 +282,9 @@ npm run dev:frontend  # React 19 Frontend (Port 5173)
 
 ---
 
-## ☁️ Production AWS Deployment via Terraform
+## ☁️ Production AWS Deployment
 
-Deploying DropSecure to live AWS Mumbai (`ap-south-1`):
+Deploying DropSecure to live AWS:
 
 ```bash
 # 1. Configure AWS CLI credentials
@@ -313,14 +313,14 @@ DropSecure was engineered across 3 distinct specialization tracks:
 │ Member 1: Client & Vision│ Member 2: Cryptography & │ Member 3: Cloud &     │
 │       Ingestion          │        Smart IoT         │      DevOps Core      │
 ├──────────────────────────┼──────────────────────────┼───────────────────────┤
-│ • 4 Decoupled Portals    │ • RFC 6238 TOTP Engine   │ • Terraform IaC in    │
-│   (/courier, /kiosk,     │   (30s Rolling QR)       │   AWS ap-south-1      │
-│   /student, /admin)      │ • 12-Bay Locker State    │ • Dual-AZ VPC Subnets │
-│ • Waybill Barcode &     │   Machine & Solenoids    │   + Private RDS DB    │
-│   OCR Scanner            │ • Salted bcrypt OTP &    │ • SQS + Worker Queue  │
-│ • S3 Direct Presigned    │   Rate Limiting (5 tries)│   + SNS Dispatches    │
-│   PUT URL Streaming      │ • Immutable Audit Logs   │ • EventBridge Lambda  │
-│                          │   with Actor Tracking    │   Serverless Sweeps   │
+│ • 4 Decoupled Portals    │ • RFC 6238 TOTP Engine   │ • Multi-AZ VPC Subnets │
+│   (/courier, /kiosk,     │   (30s Rolling QR)       │   + Private RDS DB     │
+│   /student, /admin)      │ • 12-Bay Locker State    │ • SQS + Worker Queue   │
+│ • Waybill Barcode &      │   Machine & Solenoids    │   + SNS Dispatches     │
+│   OCR Scanner            │ • Salted bcrypt OTP &    │ • EventBridge Lambda   │
+│ • S3 Direct Presigned    │   Rate Limiting (5 tries)│   Serverless Sweeps    │
+│   PUT URL Streaming      │ • Immutable Audit Logs   │ • CloudWatch Telemetry │
+│                          │   with Actor Tracking    │   & Production Setup   │
 └──────────────────────────┴──────────────────────────┴───────────────────────┘
 ```
 
@@ -332,7 +332,7 @@ Engineered to fulfill all 5 evaluation criteria in the **Cloud Computing Lab (CC
 
 - **R1: Problem Definition & Planning:** Concrete resolution of campus gate parcel congestion and theft across university hostels.
 - **R2: Cloud Service Selection & Architecture:** Logical integration of 9 distinct AWS services (VPC, EC2, RDS, S3, SQS, SNS, Lambda, EventBridge, SSM).
-- **R3: Implementation & Functional Execution:** 100% deployed live in `ap-south-1` Mumbai with real-time hardware locker simulation and sub-50ms API throughput.
+- **R3: Implementation & Functional Execution:** 100% deployed live on AWS with real-time hardware locker simulation and sub-50ms API throughput.
 - **R4: Security Handling & Cloud Setup:** Zero-secret SSM parameter store, least-privilege IAM instance profiles, private RDS subnets, presigned S3 URLs, and RFC 6238 TOTP tokens.
 - **R5: Report & Documentation:** Complete architectural diagrams, Terraform IaC, cost-benefit trade-offs, and evaluator walkthrough scripts.
 

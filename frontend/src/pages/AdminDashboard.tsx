@@ -653,7 +653,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                     <div className="flex justify-between text-slate-400">
                       <span>Cloud AZ:</span>
-                      <span className="font-mono text-brand-400">{camp.cloudRegion || 'ap-south-1a'}</span>
+                      <span className="font-mono text-brand-400">{camp.cloudRegion || 'AWS Multi-AZ'}</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
                       <span>Pending Pickups:</span>
