@@ -1,0 +1,106 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dropsecure-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dropsecure_user
+      POSTGRES_PASSWORD: dropsecure_password
+      POSTGRES_DB: dropsecure_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dropsecure_user -d dropsecure_db"]
+      interval: 4s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dropsecure-net
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: dropsecure-localstack
+    profiles:
+      - aws-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,sns,ssm
+      - AWS_DEFAULT_REGION=ap-south-1
+    volumes:
+      - ./infra/scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh
+    networks:
+      - dropsecure-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: dropsecure-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      PROVIDER_MODE: local
+      DATABASE_URL: postgresql://dropsecure_user:dropsecure_password@postgres:5432/dropsecure_db
+      FRONTEND_URL: http://localhost:5173
+      JWT_SECRET: super-secret-jwt-key-for-dropsecure-development-only-32chars
+      AWS_REGION: ap-south-1
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      S3_BUCKET_NAME: dropsecure-parcel-photos
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/notification-queue
+      SNS_TOPIC_ARN: arn:aws:sns:ap-south-1:000000000000:parcel-notifications
+    networks:
+      - dropsecure-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: dropsecure-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PROVIDER_MODE: local
+      DATABASE_URL: postgresql://dropsecure_user:dropsecure_password@postgres:5432/dropsecure_db
+      AWS_REGION: ap-south-1
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/notification-queue
+      SNS_TOPIC_ARN: arn:aws:sns:ap-south-1:000000000000:parcel-notifications
+    networks:
+      - dropsecure-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: dropsecure-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    networks:
+      - dropsecure-net
+
+networks:
+  dropsecure-net:
+    driver: bridge
+
+volumes:
+  pgdata:

@@ -1,0 +1,35 @@
+{
+  "name": "dropsecure",
+  "version": "1.0.0",
+  "description": "DropSecure - Cloud-Managed Package Handover and Verification System on AWS",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "worker",
+    "lambda",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace=backend run dev",
+    "dev:worker": "npm --workspace=worker run dev",
+    "dev:frontend": "npm --workspace=frontend run dev",
+    "test:backend": "npm --workspace=backend run test",
+    "test:lambda": "npm --workspace=lambda run test",
+    "build:all": "npm --workspace=backend run build && npm --workspace=worker run build && npm --workspace=lambda run build && npm --workspace=frontend run build",
+    "db:migrate": "npm --workspace=backend run db:migrate",
+    "db:seed": "npm --workspace=backend run db:seed",
+    "db:cloud": "node scripts/db-cli.js"
+  },
+  "keywords": [
+    "aws",
+    "cloud-computing",
+    "sqs",
+    "sns",
+    "s3",
+    "rds",
+    "lambda",
+    "security"
+  ],
+  "author": "DropSecure Team",
+  "license": "MIT"
+}

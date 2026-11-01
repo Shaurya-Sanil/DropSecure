@@ -1,0 +1,24 @@
+{
+  "name": "dropsecure-lambda",
+  "version": "1.0.0",
+  "description": "DropSecure Daily Sweep Lambda Function",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --external:@aws-sdk/*",
+    "sweep": "tsx src/testLocal.ts",
+    "test": "tsx src/testLocal.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.750.0",
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.13.8",
+    "@types/pg": "^8.11.11",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
