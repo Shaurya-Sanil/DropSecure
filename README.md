@@ -329,13 +329,3 @@ DropSecure was engineered across 3 distinct specialization tracks:
 ```
 
 ---
-
-## 📜 Academic Rubric & Grading Alignment
-
-Engineered to fulfill all 5 evaluation criteria in the **Cloud Computing Lab (CCL) Mini-Project Rubric**:
-
-- **R1: Problem Definition & Planning:** Concrete resolution of campus gate parcel congestion and theft across university hostels.
-- **R2: Cloud Service Selection & Architecture:** Logical integration of 9 distinct AWS services (VPC, EC2, RDS, S3, SQS, SNS, Lambda, EventBridge, SSM).
-- **R3: Implementation & Functional Execution:** 100% deployed live on AWS with real-time hardware locker simulation and sub-50ms API throughput.
-- **R4: Security Handling & Cloud Setup:** Zero-secret SSM parameter store, least-privilege IAM instance profiles, private RDS subnets, presigned S3 URLs, and RFC 6238 TOTP tokens.
-- **R5: Report & Documentation:** Complete architectural diagrams, cost-benefit trade-offs, and verification workflows.
