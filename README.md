@@ -6,13 +6,11 @@
 ---
 
 [![AWS Cloud](https://img.shields.io/badge/AWS-Cloud-FF9900?logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
-[![Terraform IaC](https://img.shields.io/badge/IaC-Terraform%20v1.9+-7B42BC?logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![TypeScript Monorepo](https://img.shields.io/badge/Language-TypeScript%205.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite%20%2B%20Tailwind-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Node.js Backend](https://img.shields.io/badge/Backend-Node.js%2022%20LTS%20%2B%20Express-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![PostgreSQL 16](https://img.shields.io/badge/Database-Amazon%20RDS%20PostgreSQL%2016-4169E1?logo=postgresql&logoColor=white)](https://aws.amazon.com/rds/)
 [![Zero-Trust Security](https://img.shields.io/badge/Security-RFC%206238%20TOTP%20%2B%20Bcrypt-10B981?logo=shield&logoColor=white)](#-zero-trust-cryptography--security-highlights)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
@@ -172,13 +170,22 @@ DropSecure models a distributed logistics network across the **Father Agnel Engi
 
 ## 📸 Screenshots & Visual Interface Gallery
 
-### 1. Student Package Portal & 48-Hour Pickup Window
-![Student Portal](./docs/assets/student-portal.png)
+### 1. Campus Gateway Portal Selector
+![Gateway Portal Selector](./docs/assets/portal-gateway.png)
 
-### 2. Zero-Trust Dynamic QR Code (RFC 6238 TOTP Standard)
-![Dynamic TOTP QR](./docs/assets/dynamic-totp-qr.png)
+### 2. Courier Fast Drop-Off & Recipient Search
+![Courier Drop-Off](./docs/assets/courier-dropoff.png)
 
-### 3. Dual-AZ AWS VPC Resource Map
+### 3. Student Package Portal & Pickup Status
+![Student Portal](./docs/assets/student-portal.jpg)
+
+### 4. Admin Multi-Campus Mesh Telemetry
+![Admin Multi-Campus](./docs/assets/admin-multi-campus.jpg)
+
+### 5. Campus Student Directory & Enrolment Management
+![Admin Student Management](./docs/assets/admin-students.png)
+
+### 6. Dual-AZ AWS VPC Resource Map
 ![AWS VPC Resource Map](./docs/assets/aws-vpc-resource-map.png)
 
 ---
@@ -217,7 +224,7 @@ CCL_mini_project/
 │   └── package.json
 ├── frontend/                 # React 19 Single-Page Application (Vite + Tailwind)
 │   ├── src/
-│   │   ├── components/       # SmartLockerGrid, DynamicQrCode, LabelScanner, CameraCapture
+│   │   ├── components/       # SmartLockerGrid, LabelScanner, CameraCapture
 │   │   ├── pages/            # DeliveryDropoff, CollectionKiosk, RecipientPortal, AdminDashboard
 │   │   ├── services/         # Typed API client & JWT session storage
 │   │   └── types.ts          # Shared TypeScript domain models
@@ -226,16 +233,13 @@ CCL_mini_project/
 │   └── src/index.ts          # SQS Long-polling worker & SNS email dispatcher
 ├── lambda/                   # Serverless Stale Package Sweeper
 │   └── src/index.ts          # Node.js 22 Lambda handler for EventBridge triggers
-├── infra/                    # Infrastructure as Code (IaC) & Deployment Scripts
-│   ├── scripts/              # EC2 bootstrap user-data & PowerShell deployment scripts
-│   └── terraform/            # Modular Terraform architecture
-│       └── modules/          # vpc, ec2, rds, s3, sqs, sns, lambda, ssm, cloudwatch
 ├── docs/                     # Architectural documentation, diagrams & assets
 │   ├── assets/               # Architecture diagrams & application screenshots
 │   ├── ARCHITECTURE.md       # Complete cloud topology blueprint
 │   ├── SECURITY_DESIGN.md    # Defense-in-depth security specification
-│   ├── DEMO_SCRIPT.md        # Step-by-step evaluator presentation guide
+│   ├── SERVICE_JUSTIFICATION.md # Cloud service selection rationale
 │   └── COST_ANALYSIS.md      # AWS Free-Tier & monthly operational cost model
+├── scripts/                  # Database CLI inspection utilities
 ├── docker-compose.yml        # Local development environment (Postgres + LocalStack)
 └── package.json              # NPM workspaces root
 ```
@@ -334,12 +338,4 @@ Engineered to fulfill all 5 evaluation criteria in the **Cloud Computing Lab (CC
 - **R2: Cloud Service Selection & Architecture:** Logical integration of 9 distinct AWS services (VPC, EC2, RDS, S3, SQS, SNS, Lambda, EventBridge, SSM).
 - **R3: Implementation & Functional Execution:** 100% deployed live on AWS with real-time hardware locker simulation and sub-50ms API throughput.
 - **R4: Security Handling & Cloud Setup:** Zero-secret SSM parameter store, least-privilege IAM instance profiles, private RDS subnets, presigned S3 URLs, and RFC 6238 TOTP tokens.
-- **R5: Report & Documentation:** Complete architectural diagrams, Terraform IaC, cost-benefit trade-offs, and evaluator walkthrough scripts.
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE) — see the LICENSE file for details.
-
-Developed with ❤️ by the DropSecure Engineering Team at Fr. Conceicao Rodrigues College of Engineering (Mumbai).
+- **R5: Report & Documentation:** Complete architectural diagrams, cost-benefit trade-offs, and verification workflows.
