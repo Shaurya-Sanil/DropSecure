@@ -1,0 +1,20 @@
+# DropSecure Production AWS Configuration
+aws_region         = "ap-south-1"
+project_name       = "dropsecure"
+environment        = "prod"
+
+# Evaluator or Student Email Address (Receives pickup OTPs & $1.00 Budget alerts)
+notification_email = "your-email@example.com"
+
+# Admin IP for SSH (Optional - leave empty to connect via AWS SSM Session Manager)
+admin_ip_cidr      = ""
+
+# EC2 Instance Sizing (Free-tier eligible)
+ec2_instance_type  = "t3.micro"
+ec2_key_name       = ""
+
+# Database Credentials (will be automatically stored in encrypted SSM Parameter Store)
+db_name            = "dropsecure_db"
+db_user            = "dropsecure_user"
+db_password        = "DropSecureRDS2026!"
+jwt_secret         = "super-secure-dropsecure-jwt-production-secret-key-32chars"

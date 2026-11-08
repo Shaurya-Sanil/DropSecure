@@ -1,0 +1,49 @@
+name: CD - Deploy to AWS EC2 via SSM
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  id-token: write   # Required for requesting AWS STS tokens via GitHub OIDC
+  contents: read    # Required for actions/checkout
+
+jobs:
+  deploy:
+    name: Deploy Application via AWS Systems Manager
+    runs-on: ubuntu-latest
+    if: github.repository == 'Shaurya-Sanil/DropSecure'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (GitHub OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::031190642258:role/dropsecure-github-deploy-role
+          aws-region: ap-south-1
+        continue-on-error: true # Allows local branches / forks to run tests without crashing
+
+      - name: Run SSM Remote Deployment Command
+        run: |
+          echo "Triggering SSM Run Command for DropSecure EC2 instances..."
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region ap-south-1 \
+            --filters "Name=tag:Name,Values=dropsecure-app-server" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text 2>/dev/null || echo "NONE")
+
+          if [ "$INSTANCE_ID" != "NONE" ] && [ -n "$INSTANCE_ID" ]; then
+            echo "Found running instance: $INSTANCE_ID. Sending SSM deploy command..."
+            aws ssm send-command \
+              --region ap-south-1 \
+              --instance-ids "$INSTANCE_ID" \
+              --document-name "AWS-RunShellScript" \
+              --parameters 'commands=["cd /opt/dropsecure && git pull origin main && npm run build --workspaces && pm2 restart all"]'
+          else
+            echo "Instance is not currently running or OIDC role not configured yet. Skipping SSM dispatch."
+          fi
