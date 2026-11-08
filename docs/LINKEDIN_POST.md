@@ -1,5 +1,8 @@
 # 🚀 DropSecure: Complete LinkedIn Launch Package & Strategy
 
+> 💡 **Feeding this to another AI?**  
+> We have prepared a complete, self-contained master dossier in [`docs/LINKEDIN_MASTER_PROMPT_PACKET.md`](./LINKEDIN_MASTER_PROMPT_PACKET.md). You can copy-paste that entire file directly into ChatGPT, Claude, or Gemini to generate tailored posts, carousel slides, or resume bullet points.
+
 This document contains publication-ready LinkedIn post copies, visual asset attachments, carousel ordering, and technical talking points tailored for **Startups, SaaS companies, and DevOps / Cloud Infrastructure Engineering recruiters**.
 
 ---
