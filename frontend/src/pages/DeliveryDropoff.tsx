@@ -508,14 +508,30 @@ export const DeliveryDropoff: React.FC<DeliveryDropoffProps> = ({ onSuccessDrop 
           </div>
         </div>
 
+        {/* Upload Progress Bar if loading */}
+        {loading && (
+          <div className="p-4 rounded-2xl bg-slate-900 border border-emerald-500/30 space-y-2">
+            <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
+              <span className="flex items-center space-x-2">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                <span>Uploading direct to S3 & queuing notifications...</span>
+              </span>
+              <span className="tabular-nums">Presigned URL active</span>
+            </div>
+            <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+              <div className="bg-emerald-400 h-full w-4/5 animate-pulse rounded-full" />
+            </div>
+          </div>
+        )}
+
         {/* Submit Button */}
         <button
           type="submit"
           disabled={loading || !photoFile || !selectedRecipientId}
-          className={`w-full py-4 px-6 rounded-2xl font-bold text-sm transition duration-200 flex items-center justify-center space-x-2 shadow-xl ${
+          className={`w-full py-4 px-6 rounded-2xl font-extrabold text-base transition-all duration-200 flex items-center justify-center space-x-2 shadow-xl ${
             loading || !photoFile || !selectedRecipientId
-              ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              : 'bg-brand-500 hover:bg-brand-400 text-slate-950 shadow-brand-500/20 active:scale-[0.99]'
+              ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+              : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25 active:scale-[0.98]'
           }`}
         >
           {loading ? (

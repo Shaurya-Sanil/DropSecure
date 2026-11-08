@@ -110,10 +110,10 @@ export const ParcelCard: React.FC<ParcelCardProps> = ({
             <span className="text-slate-300">{new Date(parcel.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
           {expirationText && (
-            <div className="flex items-center space-x-2 text-amber-400/90 font-medium">
+            <div className="flex items-center space-x-2 text-amber-400 font-medium">
               <Clock className="h-3.5 w-3.5 text-amber-400 shrink-0" />
               <span>48h Pickup Window:</span>
-              <span className="font-mono text-amber-300">{expirationText}</span>
+              <span className="font-mono text-amber-300 tabular-nums px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">{expirationText}</span>
             </div>
           )}
         </div>

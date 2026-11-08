@@ -370,38 +370,42 @@ export const CollectionKiosk: React.FC<CollectionKioskProps> = ({ initialTrackin
             <form onSubmit={handleVerify} className="space-y-4 pt-2">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
-                    <KeyRound className="h-4 w-4 text-brand-400" />
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
+                    <KeyRound className="h-4 w-4 text-emerald-400" />
                     <span>2. Enter 6-Digit Pickup OTP</span>
                   </label>
                   {attemptsRemaining !== null && (
-                    <span className="text-[11px] text-amber-400 font-medium">
-                      {attemptsRemaining} attempts left
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 tabular-nums">
+                      {attemptsRemaining} of 5 attempts remaining
                     </span>
                   )}
                 </div>
 
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="• • • • • •"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-950 border-2 border-slate-700 focus:border-brand-500 rounded-2xl py-3.5 text-center text-2xl font-mono font-bold tracking-[0.5em] text-white focus:outline-none"
-                  autoFocus
-                />
-                <p className="text-[11px] text-slate-500 mt-1.5 text-center">
-                  Sent via email/SMS to {activeParcel.recipient_name}
-                </p>
+                <div className="p-4 rounded-2xl bg-slate-950 border-2 border-slate-700 focus-within:border-emerald-400 transition-colors">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-transparent text-center text-4xl sm:text-5xl font-mono font-bold tracking-[0.35em] text-white focus:outline-none tabular-nums placeholder-slate-700"
+                    autoFocus
+                  />
+                  <p className="text-xs text-slate-400 mt-2 text-center">
+                    Check verified student email or SMS for OTP
+                  </p>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={verifying || otp.length !== 6}
-                className={`w-full py-4 px-6 rounded-2xl font-bold text-sm transition duration-200 flex items-center justify-center space-x-2 shadow-xl ${
+                className={`w-full py-4 px-6 rounded-2xl font-bold text-base transition-all duration-200 flex items-center justify-center space-x-2 shadow-xl ${
                   verifying || otp.length !== 6
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                    : 'bg-brand-500 hover:bg-brand-400 text-slate-950 shadow-brand-500/20 active:scale-[0.99]'
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                    : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25 active:scale-[0.98]'
                 }`}
               >
                 {verifying ? (

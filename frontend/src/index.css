@@ -7,9 +7,25 @@
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
-  code, pre {
+  code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+}
+
+/* Tabular numbers for clocks, OTP inputs, countdowns, and table metrics */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+}
+
+/* Design System Utilities: Harmonious inner radius = outer - padding */
+/* Example: outer p-4 (16px) with rounded-2xl (16px) -> inner rounded-lg (8px) */
+.radius-card {
+  border-radius: 1rem; /* 16px */
+}
+.radius-card-inner {
+  border-radius: 0.5rem; /* 8px */
 }
 
 /* Glassmorphism card utilities */
@@ -36,4 +52,16 @@
 
 .animate-subtle-pulse {
   animation: subtle-pulse 3s infinite ease-in-out;
+}
+
+/* Skeleton Loading Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 25%, rgba(51, 65, 85, 0.5) 50%, rgba(30, 41, 59, 0.5) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
 }

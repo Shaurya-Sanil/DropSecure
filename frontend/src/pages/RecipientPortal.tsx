@@ -309,9 +309,10 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
                   {onNavigateToKiosk && (
                     <button
                       onClick={() => onNavigateToKiosk(p.tracking_code)}
-                      className="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-sm"
+                      className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-3.5 py-1.5 rounded-xl text-xs transition shadow-md shadow-emerald-500/20 active:scale-95 flex items-center space-x-1"
                     >
-                      Collect
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Collect Now</span>
                     </button>
                   )}
                 </div>
@@ -362,9 +363,13 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
 
       {/* Parcels List */}
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-slate-900/50 rounded-3xl animate-pulse" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80 space-y-3">
+              <div className="h-5 w-48 rounded-lg skeleton-shimmer" />
+              <div className="h-4 w-72 rounded-lg skeleton-shimmer" />
+              <div className="h-20 w-full rounded-2xl skeleton-shimmer" />
+            </div>
           ))}
         </div>
       ) : displayedParcels.length === 0 ? (
