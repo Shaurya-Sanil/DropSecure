@@ -10,6 +10,7 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1164.0",
     "@aws-sdk/client-sns": "^3.750.0",
     "@aws-sdk/client-sqs": "^3.750.0",
     "@aws-sdk/client-ssm": "^3.750.0",

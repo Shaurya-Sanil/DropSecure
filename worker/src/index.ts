@@ -9,6 +9,7 @@ import {
   DeleteMessageCommand,
 } from '@aws-sdk/client-sqs';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 // Load .env
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
@@ -22,6 +23,8 @@ const awsRegion = process.env.AWS_REGION || 'ap-south-1';
 const awsEndpoint = process.env.AWS_ENDPOINT_URL || undefined;
 const sqsQueueUrl = process.env.SQS_QUEUE_URL || 'http://localhost:4566/000000000000/notification-queue';
 const snsTopicArn = process.env.SNS_TOPIC_ARN || 'arn:aws:sns:ap-south-1:000000000000:parcel-notifications';
+const sesSenderEmail = process.env.SES_SENDER_EMAIL || 'notifications@dropsecure.edu';
+const enableSes = process.env.ENABLE_SES === 'true';
 
 const pool = new Pool({
   connectionString: databaseUrl,
@@ -42,6 +45,7 @@ if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
 
 const sqsClient = new SQSClient(awsClientConfig);
 const snsClient = new SNSClient(awsClientConfig);
+const sesClient = new SESClient(awsClientConfig);
 
 let isRunning = true;
 
@@ -84,22 +88,59 @@ async function processParcelNotification(parcelId: string): Promise<void> {
   const subject = `[DropSecure] Parcel Arrived at Campus Gate (${parcel.tracking_code})`;
   const body = `Hello ${parcel.name},\n\nA parcel addressed to you (${parcel.room_number || 'Campus'}) has arrived at the security gate.\n\nTracking Code: ${parcel.tracking_code}\nYour 6-Digit Pickup OTP: ${rawOtp}\nExpiry: 48 Hours\n\nPlease present this OTP to campus security at the gate to claim your delivery.\n\nDropSecure Automated Gate Service`;
 
-  // 5. Publish to Amazon SNS (or Dev Outbox)
+  // 5. Publish to Amazon SES and SNS (or Dev Outbox)
   if (providerMode === 'aws') {
-    console.log(`[WORKER] Publishing to SNS Topic with recipientId filter: ${parcel.recipient_id}`);
-    await snsClient.send(
-      new PublishCommand({
-        TopicArn: snsTopicArn,
-        Subject: subject,
-        Message: body,
-        MessageAttributes: {
-          recipientId: {
-            DataType: 'String',
-            StringValue: parcel.recipient_id,
+    // 5a. Direct SES Email Delivery
+    if (enableSes && parcel.email) {
+      try {
+        const sesCommand = new SendEmailCommand({
+          Source: sesSenderEmail,
+          Destination: { ToAddresses: [parcel.email] },
+          Message: {
+            Subject: { Data: subject },
+            Body: {
+              Text: { Data: body },
+              Html: {
+                Data: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
+                  <h2>${subject}</h2>
+                  <p style="white-space: pre-line; line-height: 1.6;">${body}</p>
+                  <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+                  <p style="font-size: 12px; color: #64748b;">DropSecure Campus Logistics & Smart Locker System</p>
+                </div>`,
+              },
+            },
           },
-        },
-      })
-    );
+        });
+        const sesRes = await sesClient.send(sesCommand);
+        console.log(`[WORKER] 📧 SES email delivered to ${parcel.email} (Message ID: ${sesRes.MessageId})`);
+      } catch (sesErr: any) {
+        console.warn(`[WORKER] ⚠️ SES delivery skipped/failed for ${parcel.email}: ${sesErr.message}. Relying on SNS + Outbox.`);
+      }
+    }
+
+    // 5b. SNS Topic Publish
+    try {
+      console.log(`[WORKER] Publishing to SNS Topic with recipientId filter: ${parcel.recipient_id}`);
+      await snsClient.send(
+        new PublishCommand({
+          TopicArn: snsTopicArn,
+          Subject: subject,
+          Message: body,
+          MessageAttributes: {
+            recipientId: {
+              DataType: 'String',
+              StringValue: parcel.recipient_id,
+            },
+            recipientEmail: {
+              DataType: 'String',
+              StringValue: parcel.email,
+            },
+          },
+        })
+      );
+    } catch (snsErr: any) {
+      console.warn(`[WORKER] ⚠️ SNS publish error: ${snsErr.message}`);
+    }
   } else {
     // Local / Dev mode: output to console
     console.log('\n================================================================');

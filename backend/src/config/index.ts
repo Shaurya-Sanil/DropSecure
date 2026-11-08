@@ -39,6 +39,10 @@ export interface AppConfig {
   sns: {
     topicArn: string;
   };
+  ses: {
+    senderEmail: string;
+    enabled: boolean;
+  };
   ssm: {
     dbSecretParam: string;
     jwtSecretParam: string;
@@ -78,6 +82,10 @@ export const config: AppConfig = {
   },
   sns: {
     topicArn: process.env.SNS_TOPIC_ARN || 'arn:aws:sns:ap-south-1:000000000000:parcel-notifications',
+  },
+  ses: {
+    senderEmail: process.env.SES_SENDER_EMAIL || 'notifications@dropsecure.edu',
+    enabled: process.env.ENABLE_SES === 'true',
   },
   ssm: {
     dbSecretParam: process.env.SSM_PARAM_DB_SECRET || '/dropsecure/db/password',
