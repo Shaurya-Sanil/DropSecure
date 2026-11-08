@@ -18,6 +18,7 @@
     "build:all": "npm --workspace=backend run build && npm --workspace=worker run build && npm --workspace=lambda run build && npm --workspace=frontend run build",
     "db:migrate": "npm --workspace=backend run db:migrate",
     "db:seed": "npm --workspace=backend run db:seed",
+    "seed": "npm --workspace=backend run db:seed",
     "db:cloud": "node scripts/db-cli.js"
   },
   "keywords": [
