@@ -12,3 +12,4 @@ output "cloudfront_arn" {
   description = "CloudFront distribution ARN"
   value       = aws_cloudfront_distribution.cdn.arn
 }
+

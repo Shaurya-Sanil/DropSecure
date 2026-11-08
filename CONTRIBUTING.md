@@ -80,3 +80,4 @@ To deploy your own cloud instance:
    terraform plan
    terraform apply
    ```
+

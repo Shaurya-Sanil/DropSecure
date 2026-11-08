@@ -13,3 +13,4 @@ variable "origin_dns_name" {
   description = "Public DNS or IP of the origin EC2 instance"
   type        = string
 }
+

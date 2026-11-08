@@ -27,3 +27,4 @@ ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS campus_id VARCHAR(50) DEFAULT 'CA
 CREATE INDEX IF NOT EXISTS idx_users_campus_id ON users(campus_id);
 CREATE INDEX IF NOT EXISTS idx_parcels_campus_id ON parcels(campus_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_campus_id ON audit_log(campus_id);
+

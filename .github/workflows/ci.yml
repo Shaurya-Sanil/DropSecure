@@ -35,6 +35,9 @@ jobs:
       - name: Frontend Build & Typecheck
         run: npm run build --workspace=frontend
 
+      - name: Run Frontend Vitest Component Tests
+        run: npm test --workspace=frontend
+
   terraform-checks:
     name: Terraform Format & Validation
     runs-on: ubuntu-latest
@@ -58,3 +61,4 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
+

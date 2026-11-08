@@ -47,3 +47,4 @@ jobs:
           else
             echo "Instance is not currently running or OIDC role not configured yet. Skipping SSM dispatch."
           fi
+

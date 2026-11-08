@@ -84,3 +84,4 @@ infra/
 - **No Long-Lived Secrets:** Applications retrieve credentials at runtime using IAM Instance Profiles and AWS Systems Manager Parameter Store.
 - **Network Isolation:** The database and Lambda sweeper reside entirely within private subnets with no public IP addresses.
 - **State File Hygiene:** Local state files (`*.tfstate`) and variable files (`*.tfvars`) are strictly ignored by `.gitignore`.
+

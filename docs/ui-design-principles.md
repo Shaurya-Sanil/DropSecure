@@ -33,3 +33,4 @@
 * **Show the actual product:** Use real data, screenshots, or mockups rather than abstract illustrations when possible.
 * **Add loading states:** Use skeleton loaders or spinners to keep the user informed during wait times.
 * **Animate useful feedback:** Use micro-interactions to confirm user actions (like a subtle bounce on a successful button click).
+

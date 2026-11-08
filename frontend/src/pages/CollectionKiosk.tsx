@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, AlertCircle, CheckCircle2, Lock, KeyRound, Building, Clock, RefreshCw, Sparkles, Image, ArrowRight, Cpu, Unlock, Zap } from 'lucide-react';
+import { AppShell } from '../components/layout/AppShell';
+import { Button } from '../components/ui/Button';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { CONFIG } from '../components/ui/utils';
 import { api } from '../services/api';
 import { Parcel } from '../types';
+import { Search, AlertCircle, CheckCircle2, RefreshCw, KeyRound, Lock, Unlock } from 'lucide-react';
 import { SmartLockerGrid } from '../components/SmartLockerGrid';
 
-interface CollectionKioskProps {
-  initialTrackingCode?: string;
-  onVerified?: () => void;
-}
-
 const KIOSK_CAMPUSES = [
-  { id: 'CAMPUS-BANDRA', name: 'Fr. CRCE Bandra', station: 'Station #1 (Main Gate)' },
-  { id: 'CAMPUS-VASHI', name: 'Fr. CRIT Vashi', station: 'Station #2 (Tech Hub)' },
-  { id: 'CAMPUS-NERUL', name: 'Agnel Nerul', station: 'Station #3 (Library Hub)' },
+  { id: 'CAMPUS-BANDRA', name: 'Fr. CRCE Bandra', station: 'Main Gate Station' },
+  { id: 'CAMPUS-VASHI', name: 'Fr. CRIT Vashi', station: 'Reception Terminal' },
+  { id: 'CAMPUS-NERUL', name: 'Agnel Nerul', station: 'Library Drop Station' },
 ];
 
-export const CollectionKiosk: React.FC<CollectionKioskProps> = ({ initialTrackingCode, onVerified }) => {
+export const CollectionKiosk: React.FC = () => {
   const [selectedCampusId, setSelectedCampusId] = useState<string>('CAMPUS-BANDRA');
-  const [trackingCode, setTrackingCode] = useState<string>(initialTrackingCode || '');
+  const [trackingCode, setTrackingCode] = useState<string>('');
   const [otp, setOtp] = useState<string>('');
   const [activeParcel, setActiveParcel] = useState<Parcel | null>(null);
   const [loadingSearch, setLoadingSearch] = useState<boolean>(false);
@@ -26,456 +25,255 @@ export const CollectionKiosk: React.FC<CollectionKioskProps> = ({ initialTrackin
   const [verifiedParcel, setVerifiedParcel] = useState<Parcel | null>(null);
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const [pendingList, setPendingList] = useState<Parcel[]>([]);
-  const [loadingPending, setLoadingPending] = useState<boolean>(true);
 
   const currentCampus = KIOSK_CAMPUSES.find((c) => c.id === selectedCampusId) || KIOSK_CAMPUSES[0];
 
   useEffect(() => {
-    fetchPendingParcels(selectedCampusId);
+    loadPending();
 
-    // Parse URL search parameters (e.g. from Dynamic QR scan: /kiosk?code=DS-5076-W&otp=942534&auto=true)
     const urlParams = new URLSearchParams(window.location.search);
-    const codeParam = urlParams.get('code') || initialTrackingCode;
+    const codeParam = urlParams.get('code');
     const otpParam = urlParams.get('otp');
-    const autoParam = urlParams.get('auto') === 'true';
-
     if (codeParam) {
       setTrackingCode(codeParam);
       if (otpParam) {
         setOtp(otpParam);
-        if (autoParam) {
-          executeAutoScanVerify(codeParam, otpParam);
-          return;
-        }
       }
-      handleLookup(codeParam);
+      lookupParcel(codeParam);
     }
-  }, [initialTrackingCode, selectedCampusId]);
+  }, [selectedCampusId]);
 
-  const executeAutoScanVerify = async (code: string, otpCode: string) => {
+  const loadPending = async () => {
     try {
-      setVerifying(true);
-      setError(null);
-      const res = await api.verifyOtp({
-        trackingCode: code,
-        otp: otpCode,
-      });
-      setVerifiedParcel(res.parcel);
-      setActiveParcel(null);
-      setOtp('');
-      fetchPendingParcels(selectedCampusId);
-      if (onVerified) {
-        onVerified();
-      }
-    } catch (err: any) {
-      setError(err.message || 'Automated QR scan verification failed.');
-      handleLookup(code);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const fetchPendingParcels = async (campusId?: string) => {
-    try {
-      setLoadingPending(true);
-      const res = await api.getKioskPending(campusId || selectedCampusId);
+      const res = await api.getKioskPending(selectedCampusId);
       setPendingList(res.pendingParcels);
     } catch (err) {
-      console.error('Error fetching kiosk pending parcels:', err);
-    } finally {
-      setLoadingPending(false);
+      console.error('Error fetching pending parcels:', err);
     }
   };
 
-  const handleLookup = async (codeToSearch?: string) => {
-    const code = (codeToSearch || trackingCode).trim();
-    if (!code) {
-      setError('Please enter a tracking code (e.g., DS-6594-O).');
-      return;
-    }
-
+  const lookupParcel = async (codeToSearch: string) => {
+    if (!codeToSearch.trim()) return;
     try {
       setLoadingSearch(true);
       setError(null);
-      setVerifiedParcel(null);
-      setOtp('');
-
-      const res = await api.lookupParcel(code);
-      const found = res.parcel;
-
-      if (found.status !== 'PENDING') {
-        setError(`Parcel ${found.tracking_code} was already ${found.status}.`);
-        setActiveParcel(found);
-        return;
-      }
-
-      setActiveParcel(found);
-      setAttemptsRemaining(Math.max(0, 5 - (found.otp_attempts || 0)));
+      const res = await api.lookupParcel(codeToSearch.trim());
+      setActiveParcel(res.parcel);
     } catch (err: any) {
-      setError(err.message || `No parcel found matching "${code}"`);
+      setError(err.message || 'Tracking ID not found');
       setActiveParcel(null);
     } finally {
       setLoadingSearch(false);
     }
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeParcel) return;
-
-    if (!otp || otp.length !== 6) {
-      setError('Please enter your complete 6-digit OTP.');
-      return;
-    }
+    if (!trackingCode || otp.length !== 6) return;
 
     try {
       setVerifying(true);
       setError(null);
-
       const res = await api.verifyOtp({
-        parcelId: activeParcel.id,
-        trackingCode: activeParcel.tracking_code,
+        trackingCode,
         otp,
       });
 
       setVerifiedParcel(res.parcel);
       setActiveParcel(null);
       setOtp('');
-      fetchPendingParcels(selectedCampusId);
-      if (onVerified) {
-        onVerified();
-      }
+      loadPending();
     } catch (err: any) {
-      setError(err.message || 'OTP verification failed.');
-      if (err.message && err.message.includes('attempt(s) remaining')) {
-        const match = err.message.match(/(\d+)\s+attempt/);
-        if (match) {
-          setAttemptsRemaining(parseInt(match[1], 10));
-        }
+      setError(err.message || 'OTP verification failed');
+      if (err.attemptsRemaining !== undefined) {
+        setAttemptsRemaining(err.attemptsRemaining);
       }
     } finally {
       setVerifying(false);
     }
   };
 
-  const handleResetKiosk = () => {
-    setActiveParcel(null);
+  const handleReset = () => {
     setVerifiedParcel(null);
+    setActiveParcel(null);
     setTrackingCode('');
     setOtp('');
     setError(null);
-    fetchPendingParcels(selectedCampusId);
+    setAttemptsRemaining(null);
   };
-
-  const handleSelectLockerBay = (lockerNum: string) => {
-    const found = pendingList.find((p) => p.locker_number === lockerNum);
-    if (found) {
-      setTrackingCode(found.tracking_code);
-      handleLookup(found.tracking_code);
-    }
-  };
-
-  // State: Verification Success Screen
-  if (verifiedParcel) {
-    const lockerBayNum = verifiedParcel.locker_number || activeParcel?.locker_number || 'L-04';
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        <div className="bg-slate-900/90 rounded-3xl p-6 sm:p-8 text-center border border-emerald-500/30 shadow-2xl shadow-emerald-950/40">
-          <div className="h-16 w-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center mb-4 ring-8 ring-emerald-500/10">
-            <Unlock className="h-10 w-10 stroke-[2.5]" />
-          </div>
-          <h2 className="text-2xl font-bold text-white">Solenoid Released: Locker Popped Open!</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Zero-Trust identity verification confirmed • Status marked{' '}
-            <span className="text-emerald-400 font-semibold uppercase">COLLECTED</span> in RDS
-          </p>
-
-          {/* Interactive Hardware Visualizer in Unlocked State */}
-          <div className="my-6">
-            <SmartLockerGrid
-              activeLocker={lockerBayNum}
-              isUnlocked={true}
-              parcels={pendingList}
-              campusName={currentCampus.name}
-              stationName={currentCampus.station}
-            />
-          </div>
-
-          <div className="bg-slate-950 rounded-2xl p-5 my-6 border border-slate-800 text-left space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="text-xs text-slate-400">Tracking Code</span>
-              <span className="text-lg font-mono font-bold text-brand-400">{verifiedParcel.tracking_code}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
-              <span className="text-slate-400">Locker Compartment</span>
-              <span className="font-mono font-bold text-xs px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                {lockerBayNum} ({verifiedParcel.locker_size || 'MEDIUM'})
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
-              <span className="text-slate-400">Carrier</span>
-              <span className="font-semibold text-white px-2.5 py-0.5 rounded-full bg-slate-800 border border-slate-700">
-                {verifiedParcel.carrier || 'Courier'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
-              <span className="text-slate-400">Collected At</span>
-              <span className="text-slate-300 font-mono">
-                {new Date(verifiedParcel.collected_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            </div>
-            {verifiedParcel.imageUrl && (
-              <div className="pt-2">
-                <span className="text-xs text-slate-400 block mb-2">Delivery Photo Proof:</span>
-                <img
-                  src={verifiedParcel.imageUrl}
-                  alt="Delivery Proof"
-                  className="w-full h-44 object-cover rounded-xl border border-slate-800"
-                />
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={handleResetKiosk}
-            className="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3.5 px-6 rounded-2xl transition duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-brand-500/20 active:scale-[0.99]"
-          >
-            <Package className="h-5 w-5" />
-            <span>Finish & Close Locker Door</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8 space-y-6">
-      {/* Kiosk Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-medium text-brand-400 mb-2">
-          <Building className="h-3.5 w-3.5" />
-          <span>Self-Service Smart Locker Terminal</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Package Collection Kiosk</h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
-          Select campus station, enter your tracking code & OTP, and claim your parcel from the smart locker bay.
-        </p>
-      </div>
-
-      {/* Campus Terminal Switcher */}
-      <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-800 max-w-2xl mx-auto">
-        {KIOSK_CAMPUSES.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => {
-              setSelectedCampusId(c.id);
-              setActiveParcel(null);
-            }}
-            className={`py-2 px-4 rounded-xl text-xs font-semibold transition ${
-              selectedCampusId === c.id
-                ? 'bg-brand-500 text-slate-950 shadow-md font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            {c.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Member 2 IoT Smart Locker Hardware Visualizer */}
-      <SmartLockerGrid
-        activeLocker={activeParcel?.locker_number}
-        parcels={pendingList}
-        campusName={currentCampus.name}
-        stationName={currentCampus.station}
-        onSelectLocker={handleSelectLockerBay}
-      />
-
-      {error && (
-        <div className="max-w-xl mx-auto p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center space-x-3">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Main Kiosk Area */}
-      <div className="max-w-xl mx-auto space-y-5">
-        {/* Step 1: Tracking ID Lookup */}
-        <div className="bg-slate-900/70 border border-slate-800/80 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
-          <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
-            1. Enter Parcel Tracking ID
-          </label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="h-4 w-4 absolute left-3.5 top-3.5 text-slate-500" />
-              <input
-                type="text"
-                placeholder="e.g. DS-6594-O"
-                value={trackingCode}
-                onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-sm font-mono font-bold tracking-wider text-white placeholder-slate-600 focus:outline-none focus:border-brand-500 uppercase"
-              />
-            </div>
+    <AppShell
+      portalName="Collection Kiosk"
+      portalDescription="Walk-up automated self-service pickup terminal"
+      primaryAction={
+        <div className="flex items-center space-x-1 border border-border rounded bg-canvas-base p-1 text-xs">
+          {KIOSK_CAMPUSES.map((c) => (
             <button
-              type="button"
-              onClick={() => handleLookup()}
-              disabled={loadingSearch || !trackingCode.trim()}
-              className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-5 py-3 rounded-2xl text-xs transition border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5 shrink-0"
+              key={c.id}
+              onClick={() => {
+                setSelectedCampusId(c.id);
+                handleReset();
+              }}
+              className={`px-2.5 py-1 rounded transition text-xs font-medium ${
+                selectedCampusId === c.id
+                  ? 'bg-canvas-raised text-fg shadow-sm'
+                  : 'text-fg-muted hover:text-fg'
+              }`}
             >
-              {loadingSearch ? <RefreshCw className="h-4 w-4 animate-spin" /> : <span>Lookup</span>}
+              {c.name}
             </button>
-          </div>
+          ))}
         </div>
+      }
+    >
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Verification Success View */}
+        {verifiedParcel ? (
+          <div className="p-8 rounded bg-canvas-surface border border-border text-center space-y-5">
+            <div className="h-12 w-12 rounded-full bg-status-success-tint border border-status-success text-status-success flex items-center justify-center mx-auto">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
 
-        {/* Step 2: Active Parcel Details & OTP Entry (Revealed when parcel found) */}
-        {activeParcel && (
-          <div className="bg-slate-900/90 border border-brand-500/40 rounded-3xl p-5 sm:p-6 space-y-5 shadow-2xl shadow-brand-500/10 animate-in fade-in duration-300">
-            <div className="flex items-start justify-between pb-4 border-b border-slate-800">
-              <div>
-                <span className="text-[10px] font-bold text-brand-400 uppercase tracking-wider">Package Verified</span>
-                <h3 className="text-lg font-bold text-white mt-0.5">{activeParcel.recipient_name}</h3>
-                <p className="text-xs text-slate-400 flex items-center space-x-1 mt-0.5">
-                  <Building className="h-3.5 w-3.5 text-slate-500" />
-                  <span>{activeParcel.recipient_room || 'Campus Hostel'}</span>
-                </p>
+            <div>
+              <h2 className="text-base font-semibold text-fg">Verification successful</h2>
+              <p className="text-xs text-fg-muted mt-1">
+                Locker door has unlatched. Please collect your parcel and close the door.
+              </p>
+            </div>
+
+            <div className="p-4 rounded bg-canvas-base border border-border text-left space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-border">
+                <span className="text-fg-muted">Tracking Code</span>
+                <span className="font-mono font-medium text-fg">{verifiedParcel.tracking_code}</span>
               </div>
-              <div className="text-right">
-                <span className="inline-block px-2.5 py-1 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-300 text-xs font-semibold">
-                  {activeParcel.carrier || 'Courier'}
+              <div className="flex justify-between py-1 border-b border-border">
+                <span className="text-fg-muted">Compartment</span>
+                <span className="font-mono font-medium text-fg">
+                  {verifiedParcel.locker_number || 'L-01'} (Simulated Hardware)
                 </span>
-                <p className="text-[11px] text-slate-400 font-mono mt-1">{activeParcel.tracking_code}</p>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-fg-muted">Status in Database</span>
+                <StatusBadge status="COLLECTED" />
               </div>
             </div>
 
-            {activeParcel.imageUrl && (
-              <div>
-                <span className="text-[11px] text-slate-400 block mb-1.5">Delivery Photo Proof:</span>
-                <img
-                  src={activeParcel.imageUrl}
-                  alt="Package proof"
-                  className="w-full h-36 object-cover rounded-xl border border-slate-800"
+            <Button onClick={handleReset} className="w-full">
+              Finish and reset kiosk
+            </Button>
+          </div>
+        ) : (
+          /* Step 1: Input Tracking ID & OTP */
+          <div className="p-6 rounded bg-canvas-surface border border-border space-y-6">
+            <div>
+              <label className="block text-xs font-medium text-fg mb-1">
+                1. Enter parcel tracking code
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. DS-4829-X"
+                  value={trackingCode}
+                  onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
+                  className="flex-1 h-12 bg-canvas-base border border-border rounded px-4 text-sm font-mono uppercase text-fg placeholder:text-fg-subtle focus:border-accent focus:outline-none"
                 />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => lookupParcel(trackingCode)}
+                  disabled={loadingSearch || !trackingCode.trim()}
+                  className="h-12 px-5 min-w-[48px]"
+                >
+                  {loadingSearch ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Find'}
+                </Button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 rounded bg-canvas-base border border-status-danger text-status-danger text-xs flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+                {attemptsRemaining !== null && (
+                  <span className="font-mono font-medium tabular-nums">
+                    {attemptsRemaining} attempts left
+                  </span>
+                )}
               </div>
             )}
 
-            {/* Smart Locker Compartment Callout */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
-              <span className="text-slate-400">Assigned Smart Locker:</span>
-              <span className="font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/30">
-                Compartment {activeParcel.locker_number || 'L-04'} ({activeParcel.locker_size || 'MEDIUM'})
-              </span>
-            </div>
-
-            {/* OTP Form */}
-            <form onSubmit={handleVerify} className="space-y-4 pt-2">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
-                    <KeyRound className="h-4 w-4 text-emerald-400" />
-                    <span>2. Enter 6-Digit Pickup OTP</span>
-                  </label>
-                  {attemptsRemaining !== null && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 tabular-nums">
-                      {attemptsRemaining} of 5 attempts remaining
+            {/* Step 2: OTP Entry Pad (Prominent, High-Contrast) */}
+            {activeParcel && (
+              <form onSubmit={handleVerifyOtp} className="pt-4 border-t border-border space-y-4">
+                <div className="p-3 rounded bg-canvas-base border border-border flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-fg-muted">Recipient: </span>
+                    <span className="font-medium text-fg">{activeParcel.recipient_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-fg-muted">Locker: </span>
+                    <span className="font-mono text-fg font-medium">
+                      {activeParcel.locker_number || 'L-01'}
                     </span>
-                  )}
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-950 border-2 border-slate-700 focus-within:border-emerald-400 transition-colors">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-medium text-fg">
+                      2. Enter 6-digit collection OTP
+                    </label>
+                    <span className="text-[11px] text-fg-subtle">Sent via email / SMS</span>
+                  </div>
                   <input
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]*"
                     maxLength={6}
                     placeholder="000000"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="w-full bg-transparent text-center text-4xl sm:text-5xl font-mono font-bold tracking-[0.35em] text-white focus:outline-none tabular-nums placeholder-slate-700"
+                    className="w-full h-16 bg-canvas-base border-2 border-border focus:border-accent rounded text-center text-3xl font-mono tracking-[0.4em] text-fg tabular-nums focus:outline-none placeholder:text-fg-subtle"
                     autoFocus
                   />
-                  <p className="text-xs text-slate-400 mt-2 text-center">
-                    Check verified student email or SMS for OTP
-                  </p>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={verifying || otp.length !== 6}
-                className={`w-full py-4 px-6 rounded-2xl font-bold text-base transition-all duration-200 flex items-center justify-center space-x-2 shadow-xl ${
-                  verifying || otp.length !== 6
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-                    : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25 active:scale-[0.98]'
-                }`}
-              >
-                {verifying ? (
-                  <>
-                    <RefreshCw className="h-5 w-5 animate-spin" />
-                    <span>Verifying Cryptographic Hash...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Verify OTP & Collect Package</span>
-                    <ArrowRight className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Quick Kiosk Pending Queue (Tap to pick) */}
-        {!activeParcel && (
-          <div className="bg-slate-900/50 border border-slate-800/80 rounded-3xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
-                <Package className="h-3.5 w-3.5 text-brand-400" />
-                <span>Currently Awaiting Collection at Station</span>
-              </span>
-              <button
-                onClick={() => fetchPendingParcels(selectedCampusId)}
-                className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center space-x-1"
-              >
-                <RefreshCw className={`h-3 w-3 ${loadingPending ? 'animate-spin' : ''}`} />
-                <span>Refresh</span>
-              </button>
-            </div>
-
-            {loadingPending ? (
-              <div className="h-24 flex items-center justify-center text-xs text-slate-500">
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                <span>Checking collection station inventory...</span>
-              </div>
-            ) : pendingList.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-4">No pending parcels awaiting pickup.</p>
-            ) : (
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {pendingList.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => {
-                      setTrackingCode(p.tracking_code);
-                      handleLookup(p.tracking_code);
-                    }}
-                    className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/70 hover:border-brand-500/40 cursor-pointer transition flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <span className="font-mono font-bold text-brand-400">{p.tracking_code}</span>
-                      <p className="text-slate-300 font-medium mt-0.5">{p.recipient_name} ({p.recipient_room || 'Hostel'})</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] text-slate-300">
-                        {p.carrier || 'Courier'}
-                      </span>
-                      <p className="text-[10px] text-slate-500 mt-1">Tap to select</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                <Button
+                  type="submit"
+                  disabled={verifying || otp.length !== 6}
+                  className="w-full h-12 text-sm font-semibold min-w-[48px]"
+                >
+                  {verifying ? 'Verifying OTP...' : 'Release locker door'}
+                </Button>
+              </form>
             )}
           </div>
         )}
+
+        {/* Simulated Locker Visualizer */}
+        <div className="p-4 rounded bg-canvas-surface border border-border">
+          <div className="flex items-center justify-between mb-3 text-xs">
+            <span className="font-medium text-fg">Simulated Locker Bay</span>
+            <span className="text-[11px] font-mono text-fg-subtle">
+              12 Compartments • {currentCampus.station}
+            </span>
+          </div>
+          <SmartLockerGrid
+            activeLocker={activeParcel?.locker_number}
+            parcels={pendingList}
+            campusName={currentCampus.name}
+            stationName={currentCampus.station}
+            onSelectLocker={(num) => {
+              const matched = pendingList.find((p) => p.locker_number === num);
+              if (matched) {
+                setTrackingCode(matched.tracking_code);
+                lookupParcel(matched.tracking_code);
+              }
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 };
