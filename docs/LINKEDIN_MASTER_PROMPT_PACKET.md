@@ -245,3 +245,4 @@ When you paste this document into ChatGPT, Claude, or Gemini, you can ask questi
 2. *"Turn this project into a 6-slide carousel PDF text layout with clear visual directions for each slide."*
 3. *"Write a concise 3-bullet-point summary of this project tailored for the 'Experience' / 'Projects' section of a DevOps / Cloud Engineer resume."*
 4. *"What are the 5 hardest behavioral and technical questions an AWS hiring manager might ask me about this architecture, and how should I answer them?"*
+

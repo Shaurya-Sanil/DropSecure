@@ -50,7 +50,7 @@ export async function seedDatabase() {
     {
       email: 'alice@student.dropsecure.edu',
       password_hash: studentHash,
-      name: 'Alice Student',
+      name: 'Student Alice',
       role: 'RECIPIENT',
       phone: '+91-9876543210',
       room_number: 'Hostel A-304',

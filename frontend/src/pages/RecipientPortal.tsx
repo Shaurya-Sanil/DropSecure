@@ -136,8 +136,8 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
                     }}
                     className="p-2 text-left rounded bg-canvas-base border border-border hover:border-accent text-xs transition"
                   >
-                    <span className="font-medium text-fg block">Alice Student</span>
-                    <span className="text-[10px] text-fg-muted font-mono">Bandra Campus</span>
+                    <span className="font-medium text-fg block">Student Alice</span>
+                    <span className="text-[10px] text-fg-muted font-mono">Bandra Campus • Room A-304</span>
                   </button>
                   <button
                     type="button"

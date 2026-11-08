@@ -54,7 +54,7 @@ async function processParcelNotification(parcelId: string): Promise<void> {
 
   // 1. Query Parcel and Recipient details
   const res = await pool.query(
-    `SELECT p.id, p.tracking_code, p.recipient_id, p.status,
+    `SELECT p.id, p.tracking_code, p.recipient_id, p.status, p.locker_number,
             u.email, u.name, u.room_number
      FROM parcels p
      JOIN users u ON p.recipient_id = u.id
@@ -85,8 +85,32 @@ async function processParcelNotification(parcelId: string): Promise<void> {
     [otpHash, parcel.id]
   );
 
+  const shortId = (parcel.recipient_id || '').slice(0, 6).toUpperCase();
+  const rawName = (parcel.name || 'Alice').replace(/\s+Student$/i, '').trim();
+  const displayName = `${rawName} (ID: STU-${shortId})`;
+
   const subject = `[DropSecure] Parcel Arrived at Campus Gate (${parcel.tracking_code})`;
-  const body = `Hello ${parcel.name},\n\nA parcel addressed to you (${parcel.room_number || 'Campus'}) has arrived at the security gate.\n\nTracking Code: ${parcel.tracking_code}\nYour 6-Digit Pickup OTP: ${rawOtp}\nExpiry: 48 Hours\n\nPlease present this OTP to campus security at the gate to claim your delivery.\n\nDropSecure Automated Gate Service`;
+  const lockerInfo = parcel.locker_number ? `\nAssigned Compartment: ${parcel.locker_number} (Simulated Smart Locker)` : '';
+  const kioskLink = `http://dropsecure-alb-209655990.ap-south-1.elb.amazonaws.com/kiosk?code=${parcel.tracking_code}`;
+  const studentPortalLink = `http://dropsecure-alb-209655990.ap-south-1.elb.amazonaws.com/student`;
+
+  const body = `Hello ${displayName},
+
+A parcel addressed to you (${parcel.room_number || 'Campus Hostel'}) has arrived at the campus smart locker station.
+
+📦 Tracking Code: ${parcel.tracking_code}${lockerInfo}
+🔐 6-Digit Pickup OTP: ${rawOtp}
+⏳ Expiry: 48 Hours
+
+To collect your package:
+1. Walk up to the campus collection kiosk at the gate.
+2. Enter your tracking code and 6-digit OTP (or click: ${kioskLink}).
+3. Your locker door will release automatically.
+
+You can also view delivery proof photos and rolling dynamic QR codes in your Student Portal:
+${studentPortalLink}
+
+DropSecure Campus Smart Locker Service`;
 
   // 5. Publish to Amazon SES and SNS (or Dev Outbox)
   if (providerMode === 'aws') {
@@ -101,11 +125,29 @@ async function processParcelNotification(parcelId: string): Promise<void> {
             Body: {
               Text: { Data: body },
               Html: {
-                Data: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
-                  <h2>${subject}</h2>
-                  <p style="white-space: pre-line; line-height: 1.6;">${body}</p>
+                Data: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #0f172a; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                  <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px;">
+                    <h2 style="margin: 0; color: #1e293b; font-size: 20px;">📦 Package Arrived at Campus Station</h2>
+                    <span style="font-size: 12px; color: #64748b; font-family: monospace;">DropSecure Smart Locker Network</span>
+                  </div>
+                  <p style="font-size: 15px; margin-bottom: 16px;">Hello <strong>${displayName}</strong>,</p>
+                  <p style="font-size: 14px; line-height: 1.6; color: #334155;">
+                    A parcel addressed to you (<strong>${parcel.room_number || 'Campus Hostel'}</strong>) has arrived and been secured in our smart lockers.
+                  </p>
+                  <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; margin: 20px 0;">
+                    <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Tracking Code</div>
+                    <div style="font-size: 16px; font-family: monospace; font-weight: bold; color: #0f172a; margin-bottom: 12px;">${parcel.tracking_code}</div>
+                    ${parcel.locker_number ? `<div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Assigned Compartment</div><div style="font-size: 16px; font-family: monospace; font-weight: bold; color: #2563eb; margin-bottom: 12px;">${parcel.locker_number} (Simulated Hardware)</div>` : ''}
+                    <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">6-Digit Collection OTP</div>
+                    <div style="font-size: 28px; font-family: monospace; font-weight: 800; color: #16a34a; letter-spacing: 0.25em; margin: 8px 0;">${rawOtp}</div>
+                    <div style="font-size: 12px; color: #dc2626;">⏳ Valid for 48 Hours</div>
+                  </div>
+                  <div style="margin: 24px 0;">
+                    <a href="${kioskLink}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">Open Kiosk with Code</a>
+                    <a href="${studentPortalLink}" style="display: inline-block; background: #f1f5f9; color: #334155; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-left: 8px;">View in Student Portal</a>
+                  </div>
                   <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-                  <p style="font-size: 12px; color: #64748b;">DropSecure Campus Logistics & Smart Locker System</p>
+                  <p style="font-size: 11px; color: #94a3b8; margin: 0;">DropSecure Campus Logistics • Zero-Trust Automated Locker System</p>
                 </div>`,
               },
             },
