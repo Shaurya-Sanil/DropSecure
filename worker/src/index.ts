@@ -10,6 +10,8 @@ import {
 } from '@aws-sdk/client-sqs';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Load .env
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
@@ -25,6 +27,7 @@ const sqsQueueUrl = process.env.SQS_QUEUE_URL || 'http://localhost:4566/00000000
 const snsTopicArn = process.env.SNS_TOPIC_ARN || 'arn:aws:sns:ap-south-1:000000000000:parcel-notifications';
 const sesSenderEmail = process.env.SES_SENDER_EMAIL || 'notifications@dropsecure.edu';
 const enableSes = process.env.ENABLE_SES === 'true';
+const s3BucketName = process.env.S3_BUCKET_NAME || 'dropsecure-photos-bae18f4a';
 
 const pool = new Pool({
   connectionString: databaseUrl,
@@ -46,6 +49,7 @@ if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
 const sqsClient = new SQSClient(awsClientConfig);
 const snsClient = new SNSClient(awsClientConfig);
 const sesClient = new SESClient(awsClientConfig);
+const s3Client = new S3Client(awsClientConfig);
 
 let isRunning = true;
 
@@ -54,7 +58,7 @@ async function processParcelNotification(parcelId: string): Promise<void> {
 
   // 1. Query Parcel and Recipient details
   const res = await pool.query(
-    `SELECT p.id, p.tracking_code, p.recipient_id, p.status, p.locker_number,
+    `SELECT p.id, p.tracking_code, p.recipient_id, p.status, p.locker_number, p.image_key,
             u.email, u.name, u.room_number
      FROM parcels p
      JOIN users u ON p.recipient_id = u.id
@@ -85,13 +89,33 @@ async function processParcelNotification(parcelId: string): Promise<void> {
     [otpHash, parcel.id]
   );
 
+  // 5. Generate a 48-hour S3 Presigned URL for parcel photo proof
+  let photoUrl = '';
+  if (parcel.image_key) {
+    if (providerMode === 'aws') {
+      try {
+        const getCommand = new GetObjectCommand({
+          Bucket: s3BucketName,
+          Key: parcel.image_key,
+        });
+        photoUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 48 * 3600 });
+      } catch (err: any) {
+        console.warn(`[WORKER] Failed to generate presigned photo URL: ${err.message}`);
+      }
+    } else {
+      photoUrl = `http://localhost:5000/api/parcels/image?key=${encodeURIComponent(parcel.image_key)}`;
+    }
+  }
+
   const shortId = (parcel.recipient_id || '').slice(0, 6).toUpperCase();
-  const rawName = (parcel.name || 'Alice').replace(/\s+Student$/i, '').trim();
-  const displayName = `${rawName} (ID: STU-${shortId})`;
+  const rawName = (parcel.name || 'Alice').replace(/^Student\s+/i, '').replace(/\s+Student$/i, '').trim();
+  const displayName = `Student ${rawName} (ID: STU-${shortId})`;
 
   const subject = `[DropSecure] Parcel Arrived at Campus Gate (${parcel.tracking_code})`;
   const lockerInfo = parcel.locker_number ? `\nAssigned Compartment: ${parcel.locker_number} (Simulated Smart Locker)` : '';
-  const kioskLink = `http://dropsecure-alb-209655990.ap-south-1.elb.amazonaws.com/kiosk?code=${parcel.tracking_code}`;
+  const photoProofText = photoUrl
+    ? `\n📷 Delivery Photo Proof (Attached by Courier):\n${photoUrl}\n(Tap or click the link above to view the package delivery photo)\n`
+    : '';
   const studentPortalLink = `http://dropsecure-alb-209655990.ap-south-1.elb.amazonaws.com/student`;
 
   const body = `Hello ${displayName},
@@ -101,7 +125,7 @@ A parcel addressed to you (${parcel.room_number || 'Campus Hostel'}) has arrived
 📦 Tracking Code: ${parcel.tracking_code}${lockerInfo}
 🔐 6-Digit Pickup OTP: ${rawOtp}
 ⏳ Expiry: 48 Hours
-
+${photoProofText}
 To collect your package:
 1. Walk up to the campus collection kiosk at the gate.
 2. Enter your tracking code and 6-digit collection OTP.
@@ -142,6 +166,16 @@ DropSecure Campus Smart Locker Service`;
                     <div style="font-size: 28px; font-family: monospace; font-weight: 800; color: #16a34a; letter-spacing: 0.25em; margin: 8px 0;">${rawOtp}</div>
                     <div style="font-size: 12px; color: #dc2626;">⏳ Valid for 48 Hours</div>
                   </div>
+                  ${photoUrl ? `
+                  <div style="margin: 20px 0; background: #f8fafc; padding: 16px; border-radius: 6px; border: 1px solid #cbd5e1; text-align: center;">
+                    <div style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; text-align: left;">
+                      📷 Delivery Photo Proof (Captured at Gate)
+                    </div>
+                    <a href="${photoUrl}" target="_blank" style="display: block; text-decoration: none;">
+                      <img src="${photoUrl}" alt="Delivery Proof" style="max-width: 100%; max-height: 280px; width: auto; height: auto; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: cover; display: inline-block;" />
+                    </a>
+                    <span style="font-size: 11px; color: #64748b; margin-top: 6px; display: block;">Tap or click image to view full high-resolution capture</span>
+                  </div>` : ''}
                   <div style="margin: 24px 0;">
                     <a href="${studentPortalLink}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">View in Student Portal</a>
                   </div>
