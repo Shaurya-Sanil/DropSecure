@@ -43,7 +43,7 @@ jobs:
               --region ap-south-1 \
               --instance-ids "$INSTANCE_ID" \
               --document-name "AWS-RunShellScript" \
-              --parameters 'commands=["cd /opt/dropsecure && git pull origin main && npm run build --workspaces && pm2 restart all"]'
+              --parameters 'commands=["cd /var/www/dropsecure && git pull origin main && npm run build --workspaces && pm2 restart all"]'
           else
             echo "Instance is not currently running or OIDC role not configured yet. Skipping SSM dispatch."
           fi

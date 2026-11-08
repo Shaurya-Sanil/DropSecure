@@ -173,17 +173,17 @@ DropSecure models a distributed logistics network across the **Father Agnel Engi
 ### 1. Campus Gateway Portal Selector
 ![Gateway Portal Selector](./docs/assets/portal-gateway.png)
 
-### 2. Courier Fast Drop-Off & Recipient Search
+### 2. Courier Fast Drop-Off & Smart Locker Compartment Selection
 ![Courier Drop-Off](./docs/assets/courier-dropoff.png)
 
-### 3. Student Package Portal & Pickup Status
+### 3. Self-Service Collection Kiosk & 12-Bay Intelligent Solenoid Terminal
+![Collection Kiosk Station](./docs/assets/kiosk-station.png)
+
+### 4. Student Package Portal & Photo Proof Verification
 ![Student Portal](./docs/assets/student-portal.jpg)
 
-### 4. Admin Multi-Campus Mesh Telemetry
+### 5. Cloud Operations & AWS Telemetry Console
 ![Admin Multi-Campus](./docs/assets/admin-multi-campus.jpg)
-
-### 5. Campus Student Directory & Enrolment Management
-![Admin Student Management](./docs/assets/admin-students.png)
 
 ### 6. Dual-AZ AWS VPC Resource Map
 ![AWS VPC Resource Map](./docs/assets/aws-vpc-resource-map.png)
