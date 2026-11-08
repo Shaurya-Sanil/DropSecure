@@ -13,3 +13,4 @@
 - **R3: Implementation & Execution:** Deployed live on AWS with simulated hardware locker integration.
 - **R4: Security Handling:** Zero-secret SSM architecture, private DB subnets, presigned S3 URLs, SSM agentless access.
 - **R5: Documentation & Report:** Architectural blueprints, cost models, and decision logs.
+

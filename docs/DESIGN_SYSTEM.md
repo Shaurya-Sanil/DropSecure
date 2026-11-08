@@ -77,3 +77,4 @@ All tokens reside in CSS variables and the Tailwind theme. Ad-hoc hex strings in
 - ❌ **No glowing shadows:** Box shadows are limited to a single neutral shadow (`0 4px 12px rgba(0, 0, 0, 0.4)`) for floating modals.
 - ❌ **No animated status dots:** Replaced with calm, static neutral chips featuring subtle status indicators.
 - ❌ **No emojis in interface headers:** Replaced with single-stroke Lucide SVG icons.
+

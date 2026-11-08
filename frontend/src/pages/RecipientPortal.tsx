@@ -5,7 +5,17 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { CONFIG } from '../components/ui/utils';
 import { api, tokenStorage } from '../services/api';
 import { Parcel, User } from '../types';
-import { Clock, QrCode, RefreshCw, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Clock,
+  QrCode,
+  RefreshCw,
+  AlertCircle,
+  Camera,
+  Eye,
+  X,
+  ShieldCheck,
+  Package,
+} from 'lucide-react';
 import { DynamicQrCode } from '../components/DynamicQrCode';
 
 interface RecipientPortalProps {
@@ -24,6 +34,7 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedParcelForQr, setSelectedParcelForQr] = useState<Parcel | null>(null);
+  const [selectedParcelForPhoto, setSelectedParcelForPhoto] = useState<Parcel | null>(null);
 
   // Authentication State
   const [loginEmail, setLoginEmail] = useState<string>(CONFIG.IS_DEMO_MODE ? 'alice@student.dropsecure.edu' : '');
@@ -149,7 +160,6 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
   }
 
   const pendingParcels = parcels.filter((p) => p.status === 'PENDING');
-  const collectedParcels = parcels.filter((p) => p.status === 'COLLECTED');
 
   return (
     <AppShell
@@ -176,6 +186,105 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
             }
           }}
         />
+      )}
+
+      {/* Driver Photo Proof Lightbox Modal */}
+      {selectedParcelForPhoto && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-canvas-surface border border-border rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-mono text-sm font-semibold text-fg">
+                    {selectedParcelForPhoto.tracking_code}
+                  </span>
+                  <StatusBadge status={selectedParcelForPhoto.status as any} />
+                </div>
+                <p className="text-xs text-fg-muted mt-0.5">
+                  Courier Delivery Photo Proof • Handover Record
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedParcelForPhoto(null)}
+                className="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-canvas-raised transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Photo Frame */}
+            <div className="p-4 bg-canvas-base flex flex-col items-center justify-center border-b border-border">
+              <img
+                src={selectedParcelForPhoto.imageUrl || '/demo-package.jpeg'}
+                alt={`Proof for ${selectedParcelForPhoto.tracking_code}`}
+                className="max-h-80 w-auto rounded border border-border object-contain shadow-md"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/demo-package.jpeg';
+                }}
+              />
+              <div className="w-full flex items-center justify-between mt-3 text-[11px] font-mono text-fg-subtle">
+                <span>Storage Key: {selectedParcelForPhoto.image_key || 'parcels/proof.jpg'}</span>
+                <span className="text-status-online flex items-center gap-1 font-sans">
+                  <ShieldCheck className="w-3.5 h-3.5 text-accent" /> Secure S3 Proof
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Details Grid */}
+            <div className="p-4 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-fg-muted block text-[11px]">Carrier</span>
+                <span className="font-medium text-fg">{selectedParcelForPhoto.carrier || 'Standard Courier'}</span>
+              </div>
+              <div>
+                <span className="text-fg-muted block text-[11px]">Assigned Locker</span>
+                <span className="font-mono font-medium text-fg">
+                  {selectedParcelForPhoto.locker_number || 'L-01'} (Simulated)
+                </span>
+              </div>
+              <div>
+                <span className="text-fg-muted block text-[11px]">Deposited Time</span>
+                <span className="text-fg">
+                  {new Date(selectedParcelForPhoto.created_at).toLocaleString()}
+                </span>
+              </div>
+              <div>
+                <span className="text-fg-muted block text-[11px]">Condition</span>
+                <span className="font-medium text-fg">
+                  {selectedParcelForPhoto.package_condition || 'INTACT'}
+                </span>
+              </div>
+              {selectedParcelForPhoto.notes && (
+                <div className="col-span-2 pt-2 border-t border-border">
+                  <span className="text-fg-muted block text-[11px]">Courier notes:</span>
+                  <p className="text-fg text-xs italic mt-0.5">"{selectedParcelForPhoto.notes}"</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-3 bg-canvas-base border-t border-border flex justify-end space-x-2">
+              <Button variant="secondary" size="sm" onClick={() => setSelectedParcelForPhoto(null)}>
+                Close
+              </Button>
+              {selectedParcelForPhoto.status === 'PENDING' && onNavigateToKiosk && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const code = selectedParcelForPhoto.tracking_code;
+                    setSelectedParcelForPhoto(null);
+                    onNavigateToKiosk(code);
+                  }}
+                >
+                  Collect at kiosk
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="space-y-6">
@@ -236,38 +345,77 @@ export const RecipientPortal: React.FC<RecipientPortalProps> = ({
                 return (
                   <div
                     key={parcel.id}
-                    className="p-4 rounded bg-canvas-surface border border-border flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="p-4 rounded bg-canvas-surface border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-border-accent transition"
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-sm font-semibold text-fg">
-                          {parcel.tracking_code}
-                        </span>
-                        <StatusBadge status={parcel.status as any} />
-                        <span className="text-xs text-fg-muted font-medium">
-                          • {parcel.carrier || 'Courier'}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-3 text-xs text-fg-muted">
-                        <span>Locker {parcel.locker_number || 'L-01'} (Simulated)</span>
-                        <span>•</span>
-                        <span>Deposited {new Date(parcel.created_at).toLocaleDateString()}</span>
-                        {parcel.status === 'PENDING' && (
-                          <>
-                            <span>•</span>
-                            <span className="text-fg flex items-center space-x-1">
-                              <Clock className="h-3 w-3 text-fg-muted" />
-                              <span className="tabular-nums font-mono font-medium">
-                                {hoursLeft}h {minsLeft}m remaining
+                    {/* Media Block: Photo Proof Thumbnail + Metadata */}
+                    <div className="flex items-start sm:items-center space-x-3.5">
+                      {/* Courier Photo Proof Thumbnail */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedParcelForPhoto(parcel)}
+                        title="Click to view driver delivery photo proof"
+                        className="relative w-16 h-16 rounded bg-canvas-base border border-border overflow-hidden shrink-0 group cursor-pointer hover:border-accent transition text-left focus:outline-none"
+                      >
+                        <img
+                          src={parcel.imageUrl || '/demo-package.jpeg'}
+                          alt={`Photo proof for ${parcel.tracking_code}`}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/demo-package.jpeg';
+                          }}
+                        />
+                        {/* Hover Overlay with Eye Icon */}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                          <Eye className="w-4 h-4" />
+                        </div>
+                      </button>
+
+                      {/* Parcel Details */}
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono text-sm font-semibold text-fg">
+                            {parcel.tracking_code}
+                          </span>
+                          <StatusBadge status={parcel.status as any} />
+                          <span className="text-xs text-fg-muted font-medium">
+                            • {parcel.carrier || 'Courier'}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
+                          <span>Locker {parcel.locker_number || 'L-01'} (Simulated)</span>
+                          <span>•</span>
+                          <span>Deposited {new Date(parcel.created_at).toLocaleDateString()}</span>
+                          {parcel.status === 'PENDING' && (
+                            <>
+                              <span>•</span>
+                              <span className="text-fg flex items-center space-x-1">
+                                <Clock className="h-3 w-3 text-fg-muted" />
+                                <span className="tabular-nums font-mono font-medium">
+                                  {hoursLeft}h {minsLeft}m remaining
+                                </span>
                               </span>
-                            </span>
-                          </>
+                            </>
+                          )}
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedParcelForPhoto(parcel)}
+                            className="text-accent hover:underline text-[11px] inline-flex items-center gap-1 font-mono"
+                          >
+                            <Camera className="w-3 h-3" /> View Photo Proof
+                          </button>
+                        </div>
+
+                        {parcel.notes && (
+                          <p className="text-[11px] text-fg-subtle italic">"{parcel.notes}"</p>
                         )}
                       </div>
                     </div>
 
+                    {/* Action Controls */}
                     {parcel.status === 'PENDING' && (
-                      <div className="flex items-center space-x-2 shrink-0">
+                      <div className="flex items-center space-x-2 shrink-0 self-end md:self-center">
                         <Button
                           variant="secondary"
                           size="sm"

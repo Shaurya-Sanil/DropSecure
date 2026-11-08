@@ -29,3 +29,4 @@ An in-depth review of the current DropSecure frontend (`frontend/src/`) identifi
 6. **Visual Styling: Glows, Gradients, and Low-Density Layouts:**
    - Use of `backdrop-blur-md`, neon emerald gradients, pulsing status dots, and disparate rounded corners (`rounded-3xl` vs `rounded-2xl`).
    - *Remediation:* Replaced with a unified design system following IBM Carbon and GitHub Primer standards.
+

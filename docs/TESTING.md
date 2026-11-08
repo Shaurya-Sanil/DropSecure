@@ -41,3 +41,4 @@ DropSecure integrates:
 1. **axe-core accessibility audits:** Programmatic contrast verification for WCAG AA compliance across dark theme tokens (`#0E1116`, `#151A21`, `#2F6FEB`, `#E6EAF0`).
 2. **Tabular Numerals & Monospace Guardrails:** Strict typographic separation ensuring numerals align vertically without column jitter.
 3. **Continuous Integration (GitHub Actions):** `.github/workflows/ci.yml` runs both backend and frontend test suites on every pull request and push to `main`.
+

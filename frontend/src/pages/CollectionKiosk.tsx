@@ -138,7 +138,7 @@ export const CollectionKiosk: React.FC = () => {
             <div>
               <h2 className="text-base font-semibold text-fg">Verification successful</h2>
               <p className="text-xs text-fg-muted mt-1">
-                Locker door has unlatched. Please collect your parcel and close the door.
+                Compartment <span className="font-mono font-bold text-status-success">{verifiedParcel.locker_number || 'L-01'}</span> door has unlatched (open in green below). Please collect your parcel and close the door.
               </p>
             </div>
 
@@ -260,7 +260,8 @@ export const CollectionKiosk: React.FC = () => {
             </span>
           </div>
           <SmartLockerGrid
-            activeLocker={activeParcel?.locker_number}
+            activeLocker={verifiedParcel ? (verifiedParcel.locker_number || 'L-01') : activeParcel?.locker_number}
+            isUnlocked={Boolean(verifiedParcel)}
             parcels={pendingList}
             campusName={currentCampus.name}
             stationName={currentCampus.station}
