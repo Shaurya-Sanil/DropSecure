@@ -104,7 +104,7 @@ A parcel addressed to you (${parcel.room_number || 'Campus Hostel'}) has arrived
 
 To collect your package:
 1. Walk up to the campus collection kiosk at the gate.
-2. Enter your tracking code and 6-digit OTP (or click: ${kioskLink}).
+2. Enter your tracking code and 6-digit collection OTP.
 3. Your locker door will release automatically.
 
 You can also view delivery proof photos and rolling dynamic QR codes in your Student Portal:
@@ -143,8 +143,7 @@ DropSecure Campus Smart Locker Service`;
                     <div style="font-size: 12px; color: #dc2626;">⏳ Valid for 48 Hours</div>
                   </div>
                   <div style="margin: 24px 0;">
-                    <a href="${kioskLink}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">Open Kiosk with Code</a>
-                    <a href="${studentPortalLink}" style="display: inline-block; background: #f1f5f9; color: #334155; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-left: 8px;">View in Student Portal</a>
+                    <a href="${studentPortalLink}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">View in Student Portal</a>
                   </div>
                   <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
                   <p style="font-size: 11px; color: #94a3b8; margin: 0;">DropSecure Campus Logistics • Zero-Trust Automated Locker System</p>
