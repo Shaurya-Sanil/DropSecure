@@ -1,7 +1,7 @@
-# 🛡️📦 DropSecure: Cloud-Native Campus Package Handover & Zero-Trust Verification
+# 🛡️📦 DropSecure: Cloud-Managed Campus Package Handover & Zero-Trust Verification
 
-> **An enterprise-grade, cloud-native logistics and smart locker verification platform engineered on Amazon Web Services (AWS) using Terraform Infrastructure as Code (IaC).**  
-> *Developed for Cloud Computing Lab (CCL) at Fr. Conceicao Rodrigues College of Engineering (Fr. CRCE Bandra, Mumbai).*
+> **A production-tested cloud logistics and smart locker verification platform engineered on Amazon Web Services (AWS) using Terraform Infrastructure as Code (IaC).**  
+> *Engineered for collegiate residence halls and student hostels to eliminate package theft and manual gate ledgers.*
 
 ---
 
@@ -27,8 +27,8 @@
 - [📂 Monorepo Directory Structure](#-monorepo-directory-structure)
 - [🚀 Quickstart & Local Execution](#-quickstart--local-execution)
 - [☁️ Production AWS Deployment via Terraform](#️-production-aws-deployment-via-terraform)
-- [👥 3-Tier Engineering Pillar Division](#-3-tier-engineering-pillar-division)
-- [📜 Academic Rubric & Grading Alignment](#-academic-rubric--grading-alignment)
+- [⚖️ Limitations & Production Scale Roadmap](#️-limitations--production-scale-roadmap)
+- [📄 License & Contributing](#-license--contributing)
 
 ---
 
@@ -301,31 +301,27 @@ npm run build --workspaces
 cd infra/terraform
 terraform init
 terraform plan
-terraform apply -auto-approve
+terraform apply
 ```
 
 ---
 
-## 👥 3-Tier Engineering Pillar Division
+## ⚖️ Limitations & Production Scale Roadmap
 
-DropSecure was engineered across 3 distinct specialization tracks:
+DropSecure is purposefully architected as a cost-effective, Free-Tier-friendly deployment for single-campus or multi-campus student pilots. To maintain strict student budget constraints (< $1.00 USD/month), intentional trade-offs were chosen:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       DROPSECURE 3-PILLAR SPECIALIZATION                    │
-├──────────────────────────┬──────────────────────────┬───────────────────────┤
-│ Member 1: Client & Vision│ Member 2: Cryptography & │ Member 3: Cloud &     │
-│       Ingestion          │        Smart IoT         │      DevOps Core      │
-├──────────────────────────┼──────────────────────────┼───────────────────────┤
-│ • 4 Decoupled Portals    │ • RFC 6238 TOTP Engine   │ • Multi-AZ VPC Subnets │
-│   (/courier, /kiosk,     │   (30s Rolling QR)       │   + Private RDS DB     │
-│   /student, /admin)      │ • 12-Bay Locker State    │ • SQS + Worker Queue   │
-│ • Waybill Barcode &      │   Machine & Solenoids    │   + SNS Dispatches     │
-│   OCR Scanner            │ • Salted bcrypt OTP &    │ • EventBridge Lambda   │
-│ • S3 Direct Presigned    │   Rate Limiting (5 tries)│   Serverless Sweeps    │
-│   PUT URL Streaming      │ • Immutable Audit Logs   │ • CloudWatch Telemetry │
-│                          │   with Actor Tracking    │   & Production Setup   │
-└──────────────────────────┴──────────────────────────┴───────────────────────┘
-```
+| Current Design Choice | Rationale & Constraint | Production Enterprise Scale Path |
+| :--- | :--- | :--- |
+| **Single EC2 Node (`t3.micro`)** | Avoids Application Load Balancer base hourly charges (~$16–22/mo). | Migrate to **AWS Application Load Balancer (ALB)** paired with an **Auto Scaling Group (ASG)** spanning multi-AZ public subnets. |
+| **Single-AZ RDS PostgreSQL** | Multi-AZ standby replica doubles DB storage & compute costs. | Enable **Amazon RDS Multi-AZ Replication** for automated synchronous standby failover and zero data loss. |
+| **PrivateLink VPC Endpoint for SNS** | Avoids AWS NAT Gateway (~$32.85/mo) while keeping DB in private subnets. | Maintain VPC Endpoints or utilize AWS Transit Gateway / dual-homed worker microservices. |
+| **SES Sandbox Mode** | Direct recipient delivery requires manual email address verification in AWS console. | Request **Amazon SES Production Access** with dedicated domain DKIM/SPF verification. |
+| **Edge HTTPS via CloudFront** | Provides global CDN caching and free SSL (`*.cloudfront.net`) with zero domain purchase overhead. | Associate custom domain via **Amazon Route 53** and **AWS Certificate Manager (ACM)**. |
 
 ---
+
+## 📄 License & Contributing
+
+- **License:** Open-source under the [MIT License](LICENSE).
+- **Contributing:** See the [Contributing & Quickstart Guide](CONTRIBUTING.md) for local Docker, testing, and migration workflows.
+- **Architectural Decision Records:** Consult [docs/DECISIONS.md](docs/DECISIONS.md) for detailed reasoning behind network boundaries, OIDC pipelines, and storage semantics.
