@@ -47,6 +47,13 @@ resource "aws_instance" "app" {
     Name        = "${var.project_name}-app-server"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
 }
 
 # Static Elastic IP associated with EC2 instance

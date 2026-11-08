@@ -73,3 +73,15 @@ variable "notification_email" {
   default     = ""
   description = "Student / Evaluator email address for SNS pickup OTPs and $1.00 Budget alerts"
 }
+
+variable "enable_alb" {
+  type        = bool
+  description = "Whether to provision an AWS Application Load Balancer across multi-AZ public subnets"
+  default     = true
+}
+
+variable "enable_cloudfront" {
+  type        = bool
+  description = "Whether to deploy CloudFront distribution (requires AWS account verification if new account)"
+  default     = false
+}

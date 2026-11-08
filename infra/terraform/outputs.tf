@@ -40,10 +40,20 @@ output "cloudwatch_dashboard_url" {
 
 output "cloudfront_domain_name" {
   description = "CloudFront Distribution Domain Name (HTTPS)"
-  value       = module.cloudfront.cloudfront_domain_name
+  value       = var.enable_cloudfront ? module.cloudfront[0].cloudfront_domain_name : null
 }
 
 output "https_application_url" {
   description = "Secure HTTPS application URL via CloudFront edge distribution"
-  value       = "https://${module.cloudfront.cloudfront_domain_name}"
+  value       = var.enable_cloudfront ? "https://${module.cloudfront[0].cloudfront_domain_name}" : null
+}
+
+output "alb_dns_name" {
+  description = "Public DNS name of the Application Load Balancer"
+  value       = var.enable_alb ? module.alb[0].alb_dns_name : null
+}
+
+output "alb_url" {
+  description = "Direct HTTP access URL via Application Load Balancer"
+  value       = var.enable_alb ? "http://${module.alb[0].alb_dns_name}" : null
 }

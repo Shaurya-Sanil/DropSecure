@@ -167,10 +167,26 @@ module "budget" {
 
 # 13. CloudFront Distribution (Edge TLS / HTTPS & Global CDN Caching)
 module "cloudfront" {
+  count           = var.enable_cloudfront ? 1 : 0
   source          = "./modules/cloudfront"
   project_name    = var.project_name
   environment     = var.environment
-  origin_dns_name = module.ec2.public_dns
+  origin_dns_name = var.enable_alb ? module.alb[0].alb_dns_name : module.ec2.public_dns
+
+  depends_on = [module.ec2, module.alb]
+}
+
+# 14. Application Load Balancer (Dual-AZ Multi-Subnet Ingress & Target Health Probes)
+module "alb" {
+  count                 = var.enable_alb ? 1 : 0
+  source                = "./modules/alb"
+  project_name          = var.project_name
+  environment           = var.environment
+  vpc_id                = module.vpc.vpc_id
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  ec2_instance_id       = module.ec2.instance_id
+  ec2_security_group_id = module.security_groups.ec2_security_group_id
+  health_check_path     = "/health"
 
   depends_on = [module.ec2]
 }

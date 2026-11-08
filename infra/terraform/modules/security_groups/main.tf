@@ -3,7 +3,7 @@
 # via AWS Systems Manager (SSM) Session Manager and Run Command with IAM least privilege.
 resource "aws_security_group" "ec2" {
   name        = "${var.project_name}-ec2-sg"
-  description = "Security group for DropSecure EC2 instances (Nginx 80/443 only)"
+  description = "Security group for DropSecure EC2 instances"
   vpc_id      = var.vpc_id
 
   ingress {

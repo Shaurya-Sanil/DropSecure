@@ -45,3 +45,13 @@
   - Kiosk and student portals scope requests automatically to their assigned campus location.
   - Admin dashboard supports both single-campus filtering and multi-campus federated views.
 
+## ADR 006: Dual-AZ AWS Application Load Balancer (ALB) Ingress
+- **Status:** Accepted & Provisioned
+- **Context:** Decoupling client ingress from single-instance compute to achieve high availability across multiple availability zones (AZs) and establish an automated health-checking gateway.
+- **Decision:** Provision an AWS Application Load Balancer across two public subnets (`ap-south-1a`, `ap-south-1b`) targeting port 80 with HTTP `/health` probe checks (interval 30s, 2 healthy / 3 unhealthy thresholds).
+- **Consequences:**
+  - Ingress traffic distributed across availability zones with automatic failover.
+  - Periodic synthetic health checking validating both Express API process and PostgreSQL RDS database connection before traffic routing.
+  - Dedicated ALB Security Group with security group peering to the EC2 host.
+  - Seamless foundation for future Auto Scaling Group (ASG) horizontal scaling.
+

@@ -60,8 +60,8 @@ DropSecure is provisioned 100% on **AWS Cloud** using **Terraform Infrastructure
 
 | Step | Component | Action & Engineering Flow |
 | :---: | :--- | :--- |
-| **1** | **User / Client** | Requests route through Internet Gateway into our Dual-AZ VPC (`10.0.0.0/16`). |
-| **2** | **Amazon EC2 Node** | `t3.micro` instance running Amazon Linux 2023, Nginx reverse proxy, and PM2 managing Express API + Worker processes. |
+| **1** | **User / Client** | Requests route through Internet Gateway into our **AWS Application Load Balancer (ALB)** spanning Dual-AZ public subnets (`ap-south-1a`, `ap-south-1b`). |
+| **2** | **Target Group & EC2** | ALB performs continuous health probes on `/health` (HTTP 200, 1ms DB check) and routes traffic to the EC2 Nginx reverse proxy. |
 | **3** | **S3 Presigned URL** | Express API generates a short-lived (15-min TTL) **S3 Presigned PUT URL** for delivery photo capture. |
 | **4** | **Direct S3 Upload** | Client browser streams binary photo **directly to Amazon S3**, bypassing EC2 RAM and CPU completely. |
 | **5** | **Amazon RDS Metadata** | Parcel metadata, locker assignment, and `bcrypt` OTP hash are persisted to private PostgreSQL 16 over SSL/TLS. |
@@ -312,7 +312,7 @@ DropSecure is purposefully architected as a cost-effective, Free-Tier-friendly d
 
 | Current Design Choice | Rationale & Constraint | Production Enterprise Scale Path |
 | :--- | :--- | :--- |
-| **Single EC2 Node (`t3.micro`)** | Avoids Application Load Balancer base hourly charges (~$16–22/mo). | Migrate to **AWS Application Load Balancer (ALB)** paired with an **Auto Scaling Group (ASG)** spanning multi-AZ public subnets. |
+| **AWS Application Load Balancer (ALB)** | Provisioned across dual-AZ public subnets with `/health` target group probes. | Pair ALB with an **Auto Scaling Group (ASG)** & Launch Template for horizontal scale-out based on CPU & SQS queue depth. |
 | **Single-AZ RDS PostgreSQL** | Multi-AZ standby replica doubles DB storage & compute costs. | Enable **Amazon RDS Multi-AZ Replication** for automated synchronous standby failover and zero data loss. |
 | **PrivateLink VPC Endpoint for SNS** | Avoids AWS NAT Gateway (~$32.85/mo) while keeping DB in private subnets. | Maintain VPC Endpoints or utilize AWS Transit Gateway / dual-homed worker microservices. |
 | **SES Sandbox Mode** | Direct recipient delivery requires manual email address verification in AWS console. | Request **Amazon SES Production Access** with dedicated domain DKIM/SPF verification. |
