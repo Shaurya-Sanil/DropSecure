@@ -199,7 +199,7 @@ parcelsRouter.get('/lookup/:code', async (req: Request, res: Response): Promise<
 parcelsRouter.get('/kiosk/pending', async (req: Request, res: Response): Promise<void> => {
   const campusFilter = req.query.campusId as string | undefined;
   let sql = `
-    SELECT p.id, p.tracking_code, p.carrier, p.created_at, p.otp_expires_at,
+    SELECT p.id, p.tracking_code, p.status, p.carrier, p.created_at, p.otp_expires_at,
            p.campus_id, p.locker_number, p.locker_size, p.package_condition,
            r.name AS recipient_name, r.room_number AS recipient_room
     FROM parcels p

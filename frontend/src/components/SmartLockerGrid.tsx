@@ -61,11 +61,27 @@ export const SmartLockerGrid: React.FC<SmartLockerGridProps> = ({
     if (num > 4 && num <= 8) size = 'M';
     if (num > 8) size = 'L';
 
-    const occupyingParcel = parcels.find(
-      (p) => p.status === 'PENDING' && (p.locker_number === id || p.locker_number === `Locker ${num}`)
-    );
+    const occupyingParcel = parcels.find((p) => {
+      const isPending = !p.status || p.status === 'PENDING';
+      if (!isPending) return false;
+      const lNum = (p.locker_number || '').trim().toUpperCase();
+      return (
+        lNum === id ||
+        lNum === `L-${num}` ||
+        lNum === `L-0${num}` ||
+        lNum === `LOCKER ${num}` ||
+        lNum === `LOCKER 0${num}` ||
+        lNum === String(num) ||
+        lNum === `L${num}`
+      );
+    });
 
-    const isSystemActive = activeLocker === id || activeLocker === `Locker ${num}`;
+    const activeUpper = (activeLocker || '').trim().toUpperCase();
+    const isSystemActive =
+      activeUpper === id ||
+      activeUpper === `L-${num}` ||
+      activeUpper === `LOCKER ${num}` ||
+      activeUpper === String(num);
     const isThisUnlocked = (isSystemActive && isUnlocked) || demoOpenLocker === id;
     const isOccupied = Boolean(occupyingParcel);
     const isLocked = isOccupied && !isThisUnlocked;
