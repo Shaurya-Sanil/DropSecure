@@ -100,9 +100,48 @@ parcelsRouter.post(
 
     const recipient = recipientRes.rows[0];
     const assignedCampus = campusId || recipient.campus_id || 'CAMPUS-BANDRA';
-    const randomLockerNum = Math.floor(1 + Math.random() * 12);
-    const assignedLocker = lockerNumber || `L-${randomLockerNum < 10 ? '0' + randomLockerNum : randomLockerNum}`;
-    const assignedSize = lockerSize || (randomLockerNum <= 4 ? 'SMALL' : randomLockerNum <= 8 ? 'MEDIUM' : 'LARGE');
+
+    // 1. Query all currently PENDING lockers at this campus to prevent double-booking
+    const existingPendingRes = await query(
+      `SELECT locker_number FROM parcels WHERE campus_id = $1 AND status = 'PENDING'`,
+      [assignedCampus]
+    );
+    const occupiedLockers = new Set(
+      existingPendingRes.rows.map((r: any) => (r.locker_number || '').trim().toUpperCase())
+    );
+
+    let assignedLocker: string | null = null;
+    if (lockerNumber && typeof lockerNumber === 'string' && lockerNumber.trim()) {
+      const requested = lockerNumber.trim().toUpperCase();
+      if (occupiedLockers.has(requested)) {
+        res.status(400).json({
+          error: `Compartment ${requested} is already occupied by another pending parcel. Please choose an available locker.`,
+        });
+        return;
+      }
+      assignedLocker = requested;
+    } else {
+      // Auto-assign the first vacant compartment from L-01 to L-12
+      for (let i = 1; i <= 12; i++) {
+        const candidate = `L-${i < 10 ? '0' + i : i}`;
+        if (!occupiedLockers.has(candidate)) {
+          assignedLocker = candidate;
+          break;
+        }
+      }
+    }
+
+    if (!assignedLocker) {
+      res.status(409).json({
+        error: `All 12 locker compartments at ${assignedCampus} are currently occupied. Please collect or sweep parcels before depositing.`,
+      });
+      return;
+    }
+
+    // Determine compartment size (L-01..04: SMALL, L-05..08: MEDIUM, L-09..12: LARGE)
+    const lockerNumParsed = parseInt(assignedLocker.replace(/\D/g, ''), 10) || 1;
+    const defaultSize = lockerNumParsed <= 4 ? 'SMALL' : lockerNumParsed <= 8 ? 'MEDIUM' : 'LARGE';
+    const assignedSize = lockerSize || defaultSize;
     const assignedCondition = packageCondition || 'INTACT';
 
     // Insert PENDING parcel row with smart locker & campus
