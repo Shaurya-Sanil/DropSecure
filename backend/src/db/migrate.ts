@@ -31,7 +31,27 @@ export async function runMigrations() {
     await client.query('ALTER TABLE parcels ADD COLUMN IF NOT EXISTS package_condition VARCHAR(50) DEFAULT \'INTACT\';');
     await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS campus_id VARCHAR(50) DEFAULT \'CAMPUS-BANDRA\';');
     await client.query('COMMIT');
-    console.log('[MIGRATE] Migrations applied successfully!');
+    console.log('[MIGRATE] Schema 001 applied successfully!');
+
+    // Apply migration 002: Campuses table & multi-tenancy
+    let migration002Path = path.join(__dirname, 'migrations', '002_multi_campus_tenancy.sql');
+    if (!fs.existsSync(migration002Path)) {
+      migration002Path = path.join(__dirname, '..', '..', 'src', 'db', 'migrations', '002_multi_campus_tenancy.sql');
+    }
+    if (!fs.existsSync(migration002Path)) {
+      migration002Path = path.resolve(process.cwd(), 'src', 'db', 'migrations', '002_multi_campus_tenancy.sql');
+    }
+    if (!fs.existsSync(migration002Path)) {
+      migration002Path = path.resolve(process.cwd(), 'backend', 'src', 'db', 'migrations', '002_multi_campus_tenancy.sql');
+    }
+
+    if (fs.existsSync(migration002Path)) {
+      const sql002 = fs.readFileSync(migration002Path, 'utf8');
+      await client.query('BEGIN');
+      await client.query(sql002);
+      await client.query('COMMIT');
+      console.log('[MIGRATE] Schema 002 applied successfully!');
+    }
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('[MIGRATE] Error applying migrations:', error);
